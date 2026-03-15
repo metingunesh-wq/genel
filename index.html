@@ -93,6 +93,7 @@
     .cat-btn[data-cat="gastronomi"].selected{ background:#e67e22; border-color:#e67e22; }
     .cat-btn[data-cat="kultur"].selected    { background:#8e44ad; border-color:#8e44ad; }
     .cat-btn[data-cat="plaj"].selected      { background:#2980b9; border-color:#2980b9; }
+    .cat-btn[data-cat="otel"].selected      { background:#d4a017; border-color:#d4a017; }
     .cat-btn[data-cat="diger"].selected     { background:#7f8c8d; border-color:#7f8c8d; }
 
     .stars { display: flex; gap: 4px; margin-top: 2px; }
@@ -229,6 +230,7 @@
               <button class="cat-btn" data-cat="gastronomi">🍽️ Gastronomi</button>
               <button class="cat-btn" data-cat="kultur">🎭 Kültürel</button>
               <button class="cat-btn" data-cat="plaj">🏖️ Plaj</button>
+              <button class="cat-btn" data-cat="otel">🏨 Otel</button>
               <button class="cat-btn" data-cat="diger">📌 Diğer</button>
             </div>
           </div>
@@ -273,6 +275,7 @@
             <option value="gastronomi">🍽️ Gastronomi</option>
             <option value="kultur">🎭 Kültürel</option>
             <option value="plaj">🏖️ Plaj</option>
+            <option value="otel">🏨 Otel</option>
             <option value="diger">📌 Diğer</option>
           </select>
         </div>
@@ -332,8 +335,8 @@
   function activeRoute() { return db.activeRouteId ? db.routes[db.activeRouteId] : null; }
   function activePlaces() { const r = activeRoute(); return r ? r.places : []; }
 
-  const CAT_LABELS = { arkeoloji:'🏛️ Arkeoloji', doga:'🌿 Doğa', gastronomi:'🍽️ Gastronomi', kultur:'🎭 Kültürel', plaj:'🏖️ Plaj', diger:'📌 Diğer' };
-  const CAT_COLORS = { arkeoloji:'#8b4513', doga:'#27ae60', gastronomi:'#e67e22', kultur:'#8e44ad', plaj:'#2980b9', diger:'#7f8c8d' };
+  const CAT_LABELS = { arkeoloji:'🏛️ Arkeoloji', doga:'🌿 Doğa', gastronomi:'🍽️ Gastronomi', kultur:'🎭 Kültürel', plaj:'🏖️ Plaj', otel:'🏨 Otel', diger:'📌 Diğer' };
+  const CAT_COLORS = { arkeoloji:'#8b4513', doga:'#27ae60', gastronomi:'#e67e22', kultur:'#8e44ad', plaj:'#2980b9', otel:'#d4a017', diger:'#7f8c8d' };
 
   function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function googleMapsUrl(lat, lng, name) { return `https://www.google.com/maps/search/${encodeURIComponent(name)}/@${lat},${lng},15z`; }
