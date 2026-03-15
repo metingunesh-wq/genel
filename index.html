@@ -119,6 +119,7 @@
     .place-name { font-weight: 700; font-size: 0.92rem; flex: 1; }
     .place-cat-badge { font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; color: white; white-space: nowrap; }
     .place-stars { font-size: 0.8rem; margin: 4px 0 2px; }
+    .place-locality { font-size: 0.76rem; color: #c0392b; font-weight: 600; margin-bottom: 3px; }
     .place-desc { font-size: 0.8rem; color: #718096; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .card-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
     .btn-sm { padding: 4px 10px; border-radius: 6px; border: none; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; }
@@ -136,6 +137,7 @@
     .gm-popup-stars { font-size: 0.9rem; margin-bottom: 5px; color: #f6ad55; }
     .gm-popup-desc { font-size: 0.82rem; color: #555; line-height: 1.45; margin-bottom: 8px; }
     .gm-popup-order { font-size: 0.72rem; color: #999; margin-bottom: 8px; }
+    .gm-popup-locality { font-size: 0.8rem; color: #c0392b; font-weight: 600; margin-bottom: 4px; }
     .gm-popup-route { font-size: 0.72rem; color: #888; margin-bottom: 6px; font-style: italic; }
     .gm-popup-link { display: inline-block; padding: 5px 12px; background: #4285f4; color: white; border-radius: 6px; font-size: 0.78rem; font-weight: 600; text-decoration: none; }
     .gm-popup-link:hover { background: #3367d6; }
@@ -165,6 +167,7 @@
       .print-cat { font-size: 0.72rem; padding: 1px 7px; border-radius: 20px; color: white; display: inline-block; margin-bottom: 4px; }
       .print-stars { font-size: 0.85rem; color: #f6ad55; margin-bottom: 3px; }
       .print-desc { font-size: 0.8rem; color: #555; line-height: 1.4; }
+      .print-locality { font-size: 0.78rem; color: #c0392b; font-weight: 600; margin-bottom: 3px; }
       .print-coords { font-size: 0.7rem; color: #a0aec0; margin-top: 3px; }
       .print-notes-section { margin-top: 20px; padding: 12px; background: #f7fafc; border-radius: 8px; }
       .print-notes-section h3 { font-size: 0.9rem; margin-bottom: 6px; color: #4a5568; }
@@ -433,25 +436,50 @@
   /* =========================================================
      GOOGLE MAPS
   ========================================================= */
-  let gmap, infoWindow, markersMap = {}, tempMarker = null, pendingLat = null, pendingLng = null;
+  let gmap, geocoder, infoWindow, markersMap = {}, tempMarker = null, pendingLat = null, pendingLng = null, pendingLocality = null;
+
+  function reverseGeocode(lat, lng, cb) {
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status !== 'OK' || !results[0]) { cb(null); return; }
+      const comps = results[0].address_components;
+      const get = (type) => { const c = comps.find(c => c.types.includes(type)); return c ? c.long_name : ''; };
+      const locality = get('locality') || get('sublocality_level_1') || get('administrative_area_level_3');
+      const district = get('administrative_area_level_2');
+      const province = get('administrative_area_level_1');
+      const parts = [];
+      if (locality && locality !== district) parts.push(locality);
+      if (district) parts.push(district);
+      if (province && province !== district) parts.push(province);
+      cb(parts.slice(0, 3).join(', ') || null);
+    });
+  }
 
   function initMap() {
     gmap = new google.maps.Map(document.getElementById('map'), {
       center: { lat: 39.0, lng: 35.0 }, zoom: 6,
       mapTypeControl: true, streetViewControl: true, fullscreenControl: true,
     });
+    geocoder = new google.maps.Geocoder();
     infoWindow = new google.maps.InfoWindow();
 
     gmap.addListener('click', (e) => {
       if (!activeRoute()) { alert('Önce bir rota seçin veya yeni rota oluşturun.'); return; }
       pendingLat = e.latLng.lat(); pendingLng = e.latLng.lng();
+      pendingLocality = null;
       if (tempMarker) tempMarker.setMap(null);
       tempMarker = new google.maps.Marker({
         position: { lat: pendingLat, lng: pendingLng }, map: gmap,
         icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#e74c3c', fillOpacity: 0.85, strokeColor: '#fff', strokeWeight: 2 },
         zIndex: 999,
       });
-      document.getElementById('coord-display').textContent = `Enlem: ${pendingLat.toFixed(5)}, Boylam: ${pendingLng.toFixed(5)}`;
+      const coordEl = document.getElementById('coord-display');
+      coordEl.textContent = `${pendingLat.toFixed(5)}, ${pendingLng.toFixed(5)} — konum alınıyor...`;
+      reverseGeocode(pendingLat, pendingLng, (loc) => {
+        pendingLocality = loc;
+        coordEl.innerHTML = loc
+          ? `📍 <b>${escHtml(loc)}</b> &nbsp;<span style="color:#a0aec0">(${pendingLat.toFixed(4)}, ${pendingLng.toFixed(4)})</span>`
+          : `${pendingLat.toFixed(5)}, ${pendingLng.toFixed(5)}`;
+      });
       setTab('add'); updateHint('✅ Konum seçildi! Detayları doldurup kaydedin.'); checkSaveBtn();
     });
 
@@ -483,7 +511,8 @@
     infoWindow.setContent(`
       <div class="gm-popup">
         <div class="gm-popup-name">${escHtml(p.name)}</div>
-        ${route ? `<div class="gm-popup-route">📍 ${escHtml(route.name)}</div>` : ''}
+        ${p.locality ? `<div class="gm-popup-locality">📍 ${escHtml(p.locality)}</div>` : ''}
+        ${route ? `<div class="gm-popup-route">🗺️ ${escHtml(route.name)}</div>` : ''}
         <div class="gm-popup-cat" style="background:${CAT_COLORS[p.cat]}">${CAT_LABELS[p.cat]}</div>
         <div class="gm-popup-stars">${stars}</div>
         ${p.desc ? `<div class="gm-popup-desc">${escHtml(p.desc)}</div>` : ''}
@@ -521,10 +550,10 @@
 
     if (editingId) {
       const idx = route.places.findIndex(p => p.id === editingId);
-      if (idx >= 0) route.places[idx] = { ...route.places[idx], name, desc, cat: selectedCat, rating: selectedRating, order };
+      if (idx >= 0) route.places[idx] = { ...route.places[idx], name, desc, cat: selectedCat, rating: selectedRating, order, locality: pendingLocality !== undefined ? pendingLocality : route.places[idx].locality };
       editingId = null;
     } else {
-      route.places.push({ id: genId(), name, desc, cat: selectedCat, rating: selectedRating, order, lat: pendingLat, lng: pendingLng });
+      route.places.push({ id: genId(), name, desc, cat: selectedCat, rating: selectedRating, order, lat: pendingLat, lng: pendingLng, locality: pendingLocality });
     }
 
     saveDb(); renderMarkers(); renderList(); resetForm();
@@ -539,7 +568,7 @@
     document.getElementById('coord-display').textContent = 'Henüz konum seçilmedi';
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
     selectedCat = null; selectedRating = 0; highlightStars(0);
-    pendingLat = null; pendingLng = null;
+    pendingLat = null; pendingLng = null; pendingLocality = null;
     if (tempMarker) { tempMarker.setMap(null); tempMarker = null; }
     editingId = null; checkSaveBtn();
   }
@@ -571,6 +600,7 @@
           <div class="place-cat-badge" style="background:${color}">${CAT_LABELS[p.cat]}</div>
         </div>
         <div class="place-stars">${stars}</div>
+        ${p.locality?`<div class="place-locality">📍 ${escHtml(p.locality)}</div>`:''}
         ${p.desc?`<div class="place-desc">${escHtml(p.desc)}</div>`:''}
         <div class="card-actions">
           <button class="btn-sm btn-edit" onclick="editPlace('${p.id}',event)">✏️ Düzenle</button>
@@ -598,7 +628,11 @@
     document.getElementById('input-name').value = p.name;
     document.getElementById('input-desc').value = p.desc || '';
     document.getElementById('input-order').value = p.order || '';
-    document.getElementById('coord-display').textContent = `Enlem: ${p.lat.toFixed(5)}, Boylam: ${p.lng.toFixed(5)}`;
+    const coordEl = document.getElementById('coord-display');
+    pendingLocality = p.locality || null;
+    coordEl.innerHTML = p.locality
+      ? `📍 <b>${escHtml(p.locality)}</b> &nbsp;<span style="color:#a0aec0">(${p.lat.toFixed(4)}, ${p.lng.toFixed(4)})</span>`
+      : `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`;
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('selected', b.dataset.cat === p.cat));
     selectedCat = p.cat; selectedRating = p.rating; highlightStars(selectedRating);
     checkSaveBtn(); setTab('add'); updateHint('✏️ Düzenleme modu — değişikliklerinizi yapıp kaydedin.');
@@ -636,7 +670,7 @@
     const sorted = sortedPlaces(places);
     let itemsHtml = sorted.map(p => {
       const stars = '★'.repeat(p.rating)+'☆'.repeat(5-p.rating);
-      return `<div class="print-item"><div class="print-num">${p.order!=null?p.order:'·'}</div><div class="print-info"><div class="print-name">${escHtml(p.name)}</div><div class="print-cat" style="background:${CAT_COLORS[p.cat]}">${CAT_LABELS[p.cat]}</div><div class="print-stars">${stars}</div>${p.desc?`<div class="print-desc">${escHtml(p.desc)}</div>`:''}<div class="print-coords">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</div></div></div>`;
+      return `<div class="print-item"><div class="print-num">${p.order!=null?p.order:'·'}</div><div class="print-info"><div class="print-name">${escHtml(p.name)}</div>${p.locality?`<div class="print-locality">📍 ${escHtml(p.locality)}</div>`:''}<div class="print-cat" style="background:${CAT_COLORS[p.cat]}">${CAT_LABELS[p.cat]}</div><div class="print-stars">${stars}</div>${p.desc?`<div class="print-desc">${escHtml(p.desc)}</div>`:''}<div class="print-coords">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</div></div></div>`;
     }).join('');
     if (!itemsHtml) itemsHtml = '<p style="color:#a0aec0">Henüz nokta eklenmedi.</p>';
     return `<div class="print-header"><h1>${escHtml(routeName)}</h1><div class="print-meta">${date?escHtml(date)+' &nbsp;|&nbsp; ':''}${sorted.length} durak</div></div><div class="print-day"><div class="print-day-title">Gezi Rotası</div>${itemsHtml}</div>${notes?`<div class="print-notes-section"><h3>Genel Notlar</h3><p style="font-size:0.85rem;color:#555;line-height:1.5">${escHtml(notes)}</p></div>`:''}`;
