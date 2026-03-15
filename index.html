@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Türkiye Seyahat Rehberim</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: linear-gradient(135deg, #c0392b, #e74c3c);
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    header h1 { font-size: 1.3rem; font-weight: 700; }
+    header span { font-size: 1.6rem; }
+
+    .app {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ---- MAP ---- */
+    #map {
+      flex: 1;
+      cursor: crosshair;
+    }
+
+    /* ---- SIDEBAR ---- */
+    .sidebar {
+      width: 360px;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+
+    .sidebar-tabs {
+      display: flex;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: #f7fafc;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #718096;
+      transition: all 0.2s;
+      border-bottom: 3px solid transparent;
+    }
+
+    .tab-btn.active {
+      background: white;
+      color: #c0392b;
+      border-bottom-color: #c0392b;
+    }
+
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ---- FORM ---- */
+    .form-group { margin-bottom: 12px; }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    input[type="text"], textarea, select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      background: #f7fafc;
+    }
+
+    input[type="text"]:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #c0392b;
+      background: white;
+    }
+
+    textarea { resize: vertical; min-height: 70px; }
+
+    .categories {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .cat-btn {
+      padding: 5px 10px;
+      border-radius: 20px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      background: #f0f4f8;
+      color: #4a5568;
+    }
+
+    .cat-btn.selected {
+      color: white;
+    }
+
+    /* category colors */
+    .cat-btn[data-cat="arkeoloji"].selected { background: #8b4513; border-color: #8b4513; }
+    .cat-btn[data-cat="doga"].selected      { background: #27ae60; border-color: #27ae60; }
+    .cat-btn[data-cat="gastronomi"].selected { background: #e67e22; border-color: #e67e22; }
+    .cat-btn[data-cat="kultur"].selected    { background: #8e44ad; border-color: #8e44ad; }
+    .cat-btn[data-cat="plaj"].selected      { background: #2980b9; border-color: #2980b9; }
+    .cat-btn[data-cat="diger"].selected     { background: #7f8c8d; border-color: #7f8c8d; }
+
+    /* star rating */
+    .stars { display: flex; gap: 4px; margin-top: 2px; }
+    .star {
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #cbd5e0;
+      transition: color 0.15s;
+    }
+    .star.active { color: #f6ad55; }
+
+    .order-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .order-input input[type="number"] {
+      width: 70px;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      background: #f7fafc;
+    }
+
+    .coord-display {
+      font-size: 0.78rem;
+      color: #718096;
+      margin-top: 4px;
+    }
+
+    .hint-box {
+      background: #ebf8ff;
+      border: 1px solid #bee3f8;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      color: #2b6cb0;
+      margin-bottom: 12px;
+    }
+
+    .btn-save {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, #c0392b, #e74c3c);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-save:hover { opacity: 0.9; }
+    .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ---- LIST ---- */
+    .list-controls {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .list-controls select {
+      flex: 1;
+      min-width: 110px;
+      padding: 6px 8px;
+      font-size: 0.8rem;
+    }
+
+    .place-card {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .place-card:hover {
+      border-color: #c0392b;
+      box-shadow: 0 2px 8px rgba(192,57,43,0.15);
+      transform: translateY(-1px);
+    }
+
+    .place-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .place-order-badge {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #c0392b;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .place-name {
+      font-weight: 700;
+      font-size: 0.92rem;
+      flex: 1;
+    }
+
+    .place-cat-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      color: white;
+      white-space: nowrap;
+    }
+
+    .place-stars { font-size: 0.8rem; margin: 4px 0 2px; }
+    .place-desc {
+      font-size: 0.8rem;
+      color: #718096;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-edit { background: #ebf8ff; color: #2b6cb0; }
+    .btn-delete { background: #fff5f5; color: #c53030; }
+    .btn-sm:hover { opacity: 0.75; }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #a0aec0;
+    }
+    .empty-state .emoji { font-size: 3rem; margin-bottom: 10px; }
+
+    /* category colors helper */
+    .bg-arkeoloji { background: #8b4513; }
+    .bg-doga      { background: #27ae60; }
+    .bg-gastronomi { background: #e67e22; }
+    .bg-kultur    { background: #8e44ad; }
+    .bg-plaj      { background: #2980b9; }
+    .bg-diger     { background: #7f8c8d; }
+
+    /* Leaflet popup custom */
+    .custom-popup .place-popup {
+      min-width: 180px;
+    }
+    .popup-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+    .popup-cat {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      color: white;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+    .popup-stars { font-size: 0.85rem; margin-bottom: 4px; }
+    .popup-desc { font-size: 0.8rem; color: #555; line-height: 1.4; }
+    .popup-order { font-size: 0.75rem; color: #888; margin-top: 4px; }
+
+    /* scrollbar */
+    .tab-content::-webkit-scrollbar { width: 5px; }
+    .tab-content::-webkit-scrollbar-track { background: #f0f4f8; }
+    .tab-content::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span>🗺️</span>
+  <h1>Türkiye Seyahat Rehberim</h1>
+</header>
+
+<div class="app">
+  <div id="map"></div>
+
+  <div class="sidebar">
+    <div class="sidebar-tabs">
+      <button class="tab-btn active" data-tab="add">+ Nokta Ekle</button>
+      <button class="tab-btn" data-tab="list">Listele</button>
+    </div>
+
+    <div class="tab-content">
+      <!-- ADD TAB -->
+      <div class="tab-panel active" id="tab-add">
+        <div class="hint-box" id="hint-box">
+          📍 Haritaya tıklayarak bir konum seçin.
+        </div>
+
+        <div class="form-group">
+          <label>Konum</label>
+          <input type="text" id="input-name" placeholder="Yer adı girin..." />
+          <div class="coord-display" id="coord-display">Henüz konum seçilmedi</div>
+        </div>
+
+        <div class="form-group">
+          <label>Kategori</label>
+          <div class="categories">
+            <button class="cat-btn" data-cat="arkeoloji">🏛️ Arkeoloji</button>
+            <button class="cat-btn" data-cat="doga">🌿 Doğa</button>
+            <button class="cat-btn" data-cat="gastronomi">🍽️ Gastronomi</button>
+            <button class="cat-btn" data-cat="kultur">🎭 Kültürel</button>
+            <button class="cat-btn" data-cat="plaj">🏖️ Plaj</button>
+            <button class="cat-btn" data-cat="diger">📌 Diğer</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Puan</label>
+          <div class="stars" id="stars">
+            <span class="star" data-val="1">★</span>
+            <span class="star" data-val="2">★</span>
+            <span class="star" data-val="3">★</span>
+            <span class="star" data-val="4">★</span>
+            <span class="star" data-val="5">★</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Sıra No <span style="font-weight:400;text-transform:none;font-size:0.75rem">(isteğe bağlı)</span></label>
+          <div class="order-input">
+            <input type="number" id="input-order" min="1" placeholder="1" />
+            <span style="font-size:0.8rem;color:#718096">gezi sırası</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Açıklama / Notlar</label>
+          <textarea id="input-desc" placeholder="Notlarınızı buraya yazın..."></textarea>
+        </div>
+
+        <button class="btn-save" id="btn-save" disabled>Kaydet</button>
+      </div>
+
+      <!-- LIST TAB -->
+      <div class="tab-panel" id="tab-list">
+        <div class="list-controls">
+          <select id="sort-by">
+            <option value="order">Sıraya Göre</option>
+            <option value="rating">Puana Göre</option>
+            <option value="name">İsme Göre</option>
+            <option value="cat">Kategoriye Göre</option>
+          </select>
+          <select id="filter-cat">
+            <option value="all">Tüm Kategoriler</option>
+            <option value="arkeoloji">🏛️ Arkeoloji</option>
+            <option value="doga">🌿 Doğa</option>
+            <option value="gastronomi">🍽️ Gastronomi</option>
+            <option value="kultur">🎭 Kültürel</option>
+            <option value="plaj">🏖️ Plaj</option>
+            <option value="diger">📌 Diğer</option>
+          </select>
+        </div>
+        <div id="place-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  /* =========================================================
+     DATA
+  ========================================================= */
+  const STORAGE_KEY = 'turkey_travel_places';
+  let places = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  let editingId = null;
+
+  const CAT_LABELS = {
+    arkeoloji: '🏛️ Arkeoloji',
+    doga:      '🌿 Doğa',
+    gastronomi:'🍽️ Gastronomi',
+    kultur:    '🎭 Kültürel',
+    plaj:      '🏖️ Plaj',
+    diger:     '📌 Diğer',
+  };
+
+  const CAT_COLORS = {
+    arkeoloji: '#8b4513',
+    doga:      '#27ae60',
+    gastronomi:'#e67e22',
+    kultur:    '#8e44ad',
+    plaj:      '#2980b9',
+    diger:     '#7f8c8d',
+  };
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(places));
+  }
+
+  function genId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+  }
+
+  /* =========================================================
+     MAP
+  ========================================================= */
+  const map = L.map('map').setView([39.0, 35.0], 6);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 18,
+  }).addTo(map);
+
+  const markersLayer = L.layerGroup().addTo(map);
+  let tempMarker = null;
+
+  // pending click state
+  let pendingLat = null;
+  let pendingLng = null;
+
+  map.on('click', (e) => {
+    pendingLat = e.latlng.lat;
+    pendingLng = e.latlng.lng;
+
+    // Remove previous temp marker
+    if (tempMarker) map.removeLayer(tempMarker);
+
+    tempMarker = L.circleMarker([pendingLat, pendingLng], {
+      radius: 8,
+      color: '#c0392b',
+      fillColor: '#e74c3c',
+      fillOpacity: 0.7,
+      weight: 2,
+    }).addTo(map);
+
+    document.getElementById('coord-display').textContent =
+      `Enlem: ${pendingLat.toFixed(5)}, Boylam: ${pendingLng.toFixed(5)}`;
+
+    // Switch to add tab
+    setTab('add');
+    updateHint('✅ Konum seçildi! Detayları doldurup kaydedin.');
+    checkSaveBtn();
+  });
+
+  function makeIcon(cat) {
+    const color = CAT_COLORS[cat] || '#7f8c8d';
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="42" viewBox="0 0 30 42">
+        <path d="M15 0 C6.716 0 0 6.716 0 15 C0 26.25 15 42 15 42 C15 42 30 26.25 30 15 C30 6.716 23.284 0 15 0 Z"
+              fill="${color}" stroke="white" stroke-width="2"/>
+        <circle cx="15" cy="15" r="7" fill="white" fill-opacity="0.85"/>
+      </svg>`;
+    return L.divIcon({
+      html: svg,
+      iconSize: [30, 42],
+      iconAnchor: [15, 42],
+      popupAnchor: [0, -44],
+      className: '',
+    });
+  }
+
+  function renderMarkers() {
+    markersLayer.clearLayers();
+    places.forEach(p => {
+      const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p.cat) });
+      const stars = '★'.repeat(p.rating) + '☆'.repeat(5 - p.rating);
+      const popup = `
+        <div class="place-popup">
+          <div class="popup-name">${escHtml(p.name)}</div>
+          <div class="popup-cat" style="background:${CAT_COLORS[p.cat]}">${CAT_LABELS[p.cat]}</div>
+          <div class="popup-stars">${stars}</div>
+          ${p.desc ? `<div class="popup-desc">${escHtml(p.desc)}</div>` : ''}
+          ${p.order ? `<div class="popup-order">Sıra: #${p.order}</div>` : ''}
+        </div>`;
+      marker.bindPopup(popup, { className: 'custom-popup' });
+      markersLayer.addLayer(marker);
+    });
+  }
+
+  /* =========================================================
+     FORM STATE
+  ========================================================= */
+  let selectedCat = null;
+  let selectedRating = 0;
+
+  // Category buttons
+  document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedCat = btn.dataset.cat;
+      checkSaveBtn();
+    });
+  });
+
+  // Stars
+  const starEls = document.querySelectorAll('.star');
+  starEls.forEach(star => {
+    star.addEventListener('mouseover', () => highlightStars(+star.dataset.val));
+    star.addEventListener('mouseout', () => highlightStars(selectedRating));
+    star.addEventListener('click', () => {
+      selectedRating = +star.dataset.val;
+      highlightStars(selectedRating);
+      checkSaveBtn();
+    });
+  });
+
+  function highlightStars(n) {
+    starEls.forEach(s => s.classList.toggle('active', +s.dataset.val <= n));
+  }
+
+  document.getElementById('input-name').addEventListener('input', checkSaveBtn);
+
+  function checkSaveBtn() {
+    const ok = pendingLat !== null && selectedCat && selectedRating > 0
+               && document.getElementById('input-name').value.trim();
+    document.getElementById('btn-save').disabled = !ok;
+  }
+
+  /* =========================================================
+     SAVE
+  ========================================================= */
+  document.getElementById('btn-save').addEventListener('click', () => {
+    const name = document.getElementById('input-name').value.trim();
+    const desc = document.getElementById('input-desc').value.trim();
+    const order = parseInt(document.getElementById('input-order').value) || null;
+
+    if (editingId) {
+      const idx = places.findIndex(p => p.id === editingId);
+      if (idx >= 0) {
+        places[idx] = { ...places[idx], name, desc, cat: selectedCat, rating: selectedRating, order };
+      }
+      editingId = null;
+    } else {
+      places.push({
+        id: genId(),
+        name,
+        desc,
+        cat: selectedCat,
+        rating: selectedRating,
+        order,
+        lat: pendingLat,
+        lng: pendingLng,
+      });
+    }
+
+    save();
+    renderMarkers();
+    renderList();
+    resetForm();
+    updateHint('📍 Haritaya tıklayarak bir konum seçin.');
+    setTab('list');
+  });
+
+  function resetForm() {
+    document.getElementById('input-name').value = '';
+    document.getElementById('input-desc').value = '';
+    document.getElementById('input-order').value = '';
+    document.getElementById('coord-display').textContent = 'Henüz konum seçilmedi';
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    selectedCat = null;
+    selectedRating = 0;
+    highlightStars(0);
+    pendingLat = null;
+    pendingLng = null;
+    if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
+    editingId = null;
+    checkSaveBtn();
+  }
+
+  /* =========================================================
+     LIST
+  ========================================================= */
+  function renderList() {
+    const sortBy = document.getElementById('sort-by').value;
+    const filterCat = document.getElementById('filter-cat').value;
+
+    let list = [...places];
+    if (filterCat !== 'all') list = list.filter(p => p.cat === filterCat);
+
+    if (sortBy === 'order') {
+      list.sort((a, b) => {
+        if (a.order == null && b.order == null) return 0;
+        if (a.order == null) return 1;
+        if (b.order == null) return -1;
+        return a.order - b.order;
+      });
+    } else if (sortBy === 'rating') {
+      list.sort((a, b) => b.rating - a.rating);
+    } else if (sortBy === 'name') {
+      list.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+    } else if (sortBy === 'cat') {
+      list.sort((a, b) => a.cat.localeCompare(b.cat));
+    }
+
+    const container = document.getElementById('place-list');
+
+    if (list.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="emoji">🗺️</div>
+          <div>Henüz nokta eklenmedi.<br>Haritaya tıklayarak başlayın!</div>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = list.map(p => {
+      const stars = '★'.repeat(p.rating) + '☆'.repeat(5 - p.rating);
+      const color = CAT_COLORS[p.cat] || '#7f8c8d';
+      return `
+        <div class="place-card" data-id="${p.id}">
+          <div class="place-card-header">
+            <div class="place-order-badge">${p.order != null ? p.order : '·'}</div>
+            <div class="place-name">${escHtml(p.name)}</div>
+            <div class="place-cat-badge" style="background:${color}">${CAT_LABELS[p.cat]}</div>
+          </div>
+          <div class="place-stars">${stars}</div>
+          ${p.desc ? `<div class="place-desc">${escHtml(p.desc)}</div>` : ''}
+          <div class="card-actions">
+            <button class="btn-sm btn-edit" onclick="editPlace('${p.id}',event)">✏️ Düzenle</button>
+            <button class="btn-sm btn-delete" onclick="deletePlace('${p.id}',event)">🗑️ Sil</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    // click card => fly to marker
+    document.querySelectorAll('.place-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-sm')) return;
+        const p = places.find(x => x.id === card.dataset.id);
+        if (p) {
+          map.flyTo([p.lat, p.lng], 12, { duration: 1.2 });
+          // open popup
+          markersLayer.eachLayer(m => {
+            if (Math.abs(m.getLatLng().lat - p.lat) < 0.0001) m.openPopup();
+          });
+        }
+      });
+    });
+  }
+
+  function editPlace(id, e) {
+    e.stopPropagation();
+    const p = places.find(x => x.id === id);
+    if (!p) return;
+
+    editingId = id;
+    pendingLat = p.lat;
+    pendingLng = p.lng;
+
+    document.getElementById('input-name').value = p.name;
+    document.getElementById('input-desc').value = p.desc || '';
+    document.getElementById('input-order').value = p.order || '';
+    document.getElementById('coord-display').textContent =
+      `Enlem: ${p.lat.toFixed(5)}, Boylam: ${p.lng.toFixed(5)}`;
+
+    // cat
+    document.querySelectorAll('.cat-btn').forEach(b => {
+      b.classList.toggle('selected', b.dataset.cat === p.cat);
+    });
+    selectedCat = p.cat;
+
+    // stars
+    selectedRating = p.rating;
+    highlightStars(selectedRating);
+
+    checkSaveBtn();
+    setTab('add');
+    updateHint('✏️ Düzenleme modu — değişikliklerinizi yapıp kaydedin.');
+  }
+
+  function deletePlace(id, e) {
+    e.stopPropagation();
+    if (!confirm('Bu noktayı silmek istiyor musunuz?')) return;
+    places = places.filter(p => p.id !== id);
+    save();
+    renderMarkers();
+    renderList();
+  }
+
+  document.getElementById('sort-by').addEventListener('change', renderList);
+  document.getElementById('filter-cat').addEventListener('change', renderList);
+
+  /* =========================================================
+     TABS
+  ========================================================= */
+  function setTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('.tab-panel').forEach(p =>
+      p.classList.toggle('active', p.id === 'tab-' + name));
+    if (name === 'list') renderList();
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => setTab(btn.dataset.tab));
+  });
+
+  /* =========================================================
+     UTILS
+  ========================================================= */
+  function updateHint(msg) {
+    document.getElementById('hint-box').textContent = msg;
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /* =========================================================
+     INIT
+  ========================================================= */
+  renderMarkers();
+  renderList();
+</script>
+</body>
+</html>
