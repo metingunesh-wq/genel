@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Türkiye Seyahat Rehberim</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -25,6 +24,7 @@
       align-items: center;
       gap: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 10;
     }
 
     header h1 { font-size: 1.3rem; font-weight: 700; }
@@ -36,10 +36,9 @@
       overflow: hidden;
     }
 
-    /* ---- MAP ---- */
     #map {
       flex: 1;
-      cursor: crosshair;
+      height: 100%;
     }
 
     /* ---- SIDEBAR ---- */
@@ -135,11 +134,7 @@
       color: #4a5568;
     }
 
-    .cat-btn.selected {
-      color: white;
-    }
-
-    /* category colors */
+    .cat-btn.selected { color: white; }
     .cat-btn[data-cat="arkeoloji"].selected { background: #8b4513; border-color: #8b4513; }
     .cat-btn[data-cat="doga"].selected      { background: #27ae60; border-color: #27ae60; }
     .cat-btn[data-cat="gastronomi"].selected { background: #e67e22; border-color: #e67e22; }
@@ -147,7 +142,6 @@
     .cat-btn[data-cat="plaj"].selected      { background: #2980b9; border-color: #2980b9; }
     .cat-btn[data-cat="diger"].selected     { background: #7f8c8d; border-color: #7f8c8d; }
 
-    /* star rating */
     .stars { display: flex; gap: 4px; margin-top: 2px; }
     .star {
       font-size: 1.5rem;
@@ -227,7 +221,6 @@
       margin-bottom: 8px;
       cursor: pointer;
       transition: all 0.2s;
-      position: relative;
     }
 
     .place-card:hover {
@@ -257,11 +250,7 @@
       flex-shrink: 0;
     }
 
-    .place-name {
-      font-weight: 700;
-      font-size: 0.92rem;
-      flex: 1;
-    }
+    .place-name { font-weight: 700; font-size: 0.92rem; flex: 1; }
 
     .place-cat-badge {
       font-size: 0.7rem;
@@ -287,6 +276,7 @@
       display: flex;
       gap: 6px;
       margin-top: 8px;
+      flex-wrap: wrap;
     }
 
     .btn-sm {
@@ -297,10 +287,15 @@
       font-weight: 600;
       cursor: pointer;
       transition: opacity 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
     }
 
-    .btn-edit { background: #ebf8ff; color: #2b6cb0; }
-    .btn-delete { background: #fff5f5; color: #c53030; }
+    .btn-edit    { background: #ebf8ff; color: #2b6cb0; }
+    .btn-delete  { background: #fff5f5; color: #c53030; }
+    .btn-gmaps   { background: #e8f5e9; color: #2e7d32; }
     .btn-sm:hover { opacity: 0.75; }
 
     .empty-state {
@@ -310,34 +305,41 @@
     }
     .empty-state .emoji { font-size: 3rem; margin-bottom: 10px; }
 
-    /* category colors helper */
-    .bg-arkeoloji { background: #8b4513; }
-    .bg-doga      { background: #27ae60; }
-    .bg-gastronomi { background: #e67e22; }
-    .bg-kultur    { background: #8e44ad; }
-    .bg-plaj      { background: #2980b9; }
-    .bg-diger     { background: #7f8c8d; }
-
-    /* Leaflet popup custom */
-    .custom-popup .place-popup {
-      min-width: 180px;
+    /* Google Maps InfoWindow custom styles */
+    .gm-popup {
+      font-family: 'Segoe UI', sans-serif;
+      min-width: 200px;
+      max-width: 260px;
     }
-    .popup-name {
+    .gm-popup-name {
       font-weight: 700;
-      font-size: 0.95rem;
-      margin-bottom: 4px;
+      font-size: 1rem;
+      margin-bottom: 5px;
+      color: #1a202c;
     }
-    .popup-cat {
-      font-size: 0.75rem;
+    .gm-popup-cat {
+      font-size: 0.72rem;
+      font-weight: 600;
       padding: 2px 8px;
       border-radius: 20px;
       color: white;
       display: inline-block;
-      margin-bottom: 6px;
+      margin-bottom: 7px;
     }
-    .popup-stars { font-size: 0.85rem; margin-bottom: 4px; }
-    .popup-desc { font-size: 0.8rem; color: #555; line-height: 1.4; }
-    .popup-order { font-size: 0.75rem; color: #888; margin-top: 4px; }
+    .gm-popup-stars { font-size: 0.9rem; margin-bottom: 5px; color: #f6ad55; }
+    .gm-popup-desc  { font-size: 0.82rem; color: #555; line-height: 1.45; margin-bottom: 8px; }
+    .gm-popup-order { font-size: 0.72rem; color: #999; margin-bottom: 8px; }
+    .gm-popup-link  {
+      display: inline-block;
+      padding: 5px 12px;
+      background: #4285f4;
+      color: white;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .gm-popup-link:hover { background: #3367d6; }
 
     /* scrollbar */
     .tab-content::-webkit-scrollbar { width: 5px; }
@@ -369,7 +371,7 @@
         </div>
 
         <div class="form-group">
-          <label>Konum</label>
+          <label>Konum Adı</label>
           <input type="text" id="input-name" placeholder="Yer adı girin..." />
           <div class="coord-display" id="coord-display">Henüz konum seçilmedi</div>
         </div>
@@ -438,7 +440,6 @@
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   /* =========================================================
      DATA
@@ -448,106 +449,130 @@
   let editingId = null;
 
   const CAT_LABELS = {
-    arkeoloji: '🏛️ Arkeoloji',
-    doga:      '🌿 Doğa',
-    gastronomi:'🍽️ Gastronomi',
-    kultur:    '🎭 Kültürel',
-    plaj:      '🏖️ Plaj',
-    diger:     '📌 Diğer',
+    arkeoloji:  '🏛️ Arkeoloji',
+    doga:       '🌿 Doğa',
+    gastronomi: '🍽️ Gastronomi',
+    kultur:     '🎭 Kültürel',
+    plaj:       '🏖️ Plaj',
+    diger:      '📌 Diğer',
   };
 
   const CAT_COLORS = {
-    arkeoloji: '#8b4513',
-    doga:      '#27ae60',
-    gastronomi:'#e67e22',
-    kultur:    '#8e44ad',
-    plaj:      '#2980b9',
-    diger:     '#7f8c8d',
+    arkeoloji:  '#8b4513',
+    doga:       '#27ae60',
+    gastronomi: '#e67e22',
+    kultur:     '#8e44ad',
+    plaj:       '#2980b9',
+    diger:      '#7f8c8d',
   };
 
-  function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(places));
-  }
+  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(places)); }
+  function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
-  function genId() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+  function googleMapsUrl(lat, lng, name) {
+    return `https://www.google.com/maps/search/${encodeURIComponent(name)}/@${lat},${lng},15z`;
   }
 
   /* =========================================================
-     MAP
+     GOOGLE MAPS
   ========================================================= */
-  const map = L.map('map').setView([39.0, 35.0], 6);
-
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 19,
-  }).addTo(map);
-
-  const markersLayer = L.layerGroup().addTo(map);
+  let gmap;
+  let infoWindow;
+  let markersMap = {}; // id -> google.maps.Marker
   let tempMarker = null;
-
-  // pending click state
   let pendingLat = null;
   let pendingLng = null;
 
-  map.on('click', (e) => {
-    pendingLat = e.latlng.lat;
-    pendingLng = e.latlng.lng;
+  function initMap() {
+    gmap = new google.maps.Map(document.getElementById('map'), {
+      center: { lat: 39.0, lng: 35.0 },
+      zoom: 6,
+      mapTypeControl: true,
+      streetViewControl: true,
+      fullscreenControl: true,
+      mapId: 'DEMO_MAP_ID',
+    });
 
-    // Remove previous temp marker
-    if (tempMarker) map.removeLayer(tempMarker);
+    infoWindow = new google.maps.InfoWindow();
 
-    tempMarker = L.circleMarker([pendingLat, pendingLng], {
-      radius: 8,
-      color: '#c0392b',
-      fillColor: '#e74c3c',
-      fillOpacity: 0.7,
-      weight: 2,
-    }).addTo(map);
+    gmap.addListener('click', (e) => {
+      pendingLat = e.latLng.lat();
+      pendingLng = e.latLng.lng();
 
-    document.getElementById('coord-display').textContent =
-      `Enlem: ${pendingLat.toFixed(5)}, Boylam: ${pendingLng.toFixed(5)}`;
+      if (tempMarker) tempMarker.setMap(null);
 
-    // Switch to add tab
-    setTab('add');
-    updateHint('✅ Konum seçildi! Detayları doldurup kaydedin.');
-    checkSaveBtn();
-  });
+      tempMarker = new google.maps.Marker({
+        position: { lat: pendingLat, lng: pendingLng },
+        map: gmap,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 9,
+          fillColor: '#e74c3c',
+          fillOpacity: 0.85,
+          strokeColor: '#fff',
+          strokeWeight: 2,
+        },
+        zIndex: 999,
+      });
 
-  function makeIcon(cat) {
-    const color = CAT_COLORS[cat] || '#7f8c8d';
-    const svg = `
+      document.getElementById('coord-display').textContent =
+        `Enlem: ${pendingLat.toFixed(5)}, Boylam: ${pendingLng.toFixed(5)}`;
+
+      setTab('add');
+      updateHint('✅ Konum seçildi! Detayları doldurup kaydedin.');
+      checkSaveBtn();
+    });
+
+    renderMarkers();
+  }
+
+  function makePinSvg(color) {
+    const encoded = encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" width="30" height="42" viewBox="0 0 30 42">
         <path d="M15 0 C6.716 0 0 6.716 0 15 C0 26.25 15 42 15 42 C15 42 30 26.25 30 15 C30 6.716 23.284 0 15 0 Z"
               fill="${color}" stroke="white" stroke-width="2"/>
         <circle cx="15" cy="15" r="7" fill="white" fill-opacity="0.85"/>
-      </svg>`;
-    return L.divIcon({
-      html: svg,
-      iconSize: [30, 42],
-      iconAnchor: [15, 42],
-      popupAnchor: [0, -44],
-      className: '',
-    });
+      </svg>`);
+    return {
+      url: 'data:image/svg+xml,' + encoded,
+      scaledSize: new google.maps.Size(30, 42),
+      anchor: new google.maps.Point(15, 42),
+    };
   }
 
   function renderMarkers() {
-    markersLayer.clearLayers();
+    // Remove old markers
+    Object.values(markersMap).forEach(m => m.setMap(null));
+    markersMap = {};
+
     places.forEach(p => {
-      const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p.cat) });
-      const stars = '★'.repeat(p.rating) + '☆'.repeat(5 - p.rating);
-      const popup = `
-        <div class="place-popup">
-          <div class="popup-name">${escHtml(p.name)}</div>
-          <div class="popup-cat" style="background:${CAT_COLORS[p.cat]}">${CAT_LABELS[p.cat]}</div>
-          <div class="popup-stars">${stars}</div>
-          ${p.desc ? `<div class="popup-desc">${escHtml(p.desc)}</div>` : ''}
-          ${p.order ? `<div class="popup-order">Sıra: #${p.order}</div>` : ''}
-        </div>`;
-      marker.bindPopup(popup, { className: 'custom-popup' });
-      markersLayer.addLayer(marker);
+      const marker = new google.maps.Marker({
+        position: { lat: p.lat, lng: p.lng },
+        map: gmap,
+        title: p.name,
+        icon: makePinSvg(CAT_COLORS[p.cat] || '#7f8c8d'),
+      });
+
+      marker.addListener('click', () => openInfoWindow(p, marker));
+      markersMap[p.id] = marker;
     });
+  }
+
+  function openInfoWindow(p, marker) {
+    const stars = '★'.repeat(p.rating) + '☆'.repeat(5 - p.rating);
+    const mapsUrl = googleMapsUrl(p.lat, p.lng, p.name);
+    infoWindow.setContent(`
+      <div class="gm-popup">
+        <div class="gm-popup-name">${escHtml(p.name)}</div>
+        <div class="gm-popup-cat" style="background:${CAT_COLORS[p.cat]}">${CAT_LABELS[p.cat]}</div>
+        <div class="gm-popup-stars">${stars}</div>
+        ${p.desc ? `<div class="gm-popup-desc">${escHtml(p.desc)}</div>` : ''}
+        ${p.order ? `<div class="gm-popup-order">Sıra: #${p.order}</div>` : ''}
+        <a class="gm-popup-link" href="${mapsUrl}" target="_blank">
+          🗺️ Google Maps'te Aç &amp; Yorumlar
+        </a>
+      </div>`);
+    infoWindow.open(gmap, marker);
   }
 
   /* =========================================================
@@ -556,7 +581,6 @@
   let selectedCat = null;
   let selectedRating = 0;
 
-  // Category buttons
   document.querySelectorAll('.cat-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
@@ -566,7 +590,6 @@
     });
   });
 
-  // Stars
   const starEls = document.querySelectorAll('.star');
   starEls.forEach(star => {
     star.addEventListener('mouseover', () => highlightStars(+star.dataset.val));
@@ -594,8 +617,8 @@
      SAVE
   ========================================================= */
   document.getElementById('btn-save').addEventListener('click', () => {
-    const name = document.getElementById('input-name').value.trim();
-    const desc = document.getElementById('input-desc').value.trim();
+    const name  = document.getElementById('input-name').value.trim();
+    const desc  = document.getElementById('input-desc').value.trim();
     const order = parseInt(document.getElementById('input-order').value) || null;
 
     if (editingId) {
@@ -605,16 +628,7 @@
       }
       editingId = null;
     } else {
-      places.push({
-        id: genId(),
-        name,
-        desc,
-        cat: selectedCat,
-        rating: selectedRating,
-        order,
-        lat: pendingLat,
-        lng: pendingLng,
-      });
+      places.push({ id: genId(), name, desc, cat: selectedCat, rating: selectedRating, order, lat: pendingLat, lng: pendingLng });
     }
 
     save();
@@ -636,7 +650,7 @@
     highlightStars(0);
     pendingLat = null;
     pendingLng = null;
-    if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
+    if (tempMarker) { tempMarker.setMap(null); tempMarker = null; }
     editingId = null;
     checkSaveBtn();
   }
@@ -645,7 +659,7 @@
      LIST
   ========================================================= */
   function renderList() {
-    const sortBy = document.getElementById('sort-by').value;
+    const sortBy    = document.getElementById('sort-by').value;
     const filterCat = document.getElementById('filter-cat').value;
 
     let list = [...places];
@@ -678,8 +692,9 @@
     }
 
     container.innerHTML = list.map(p => {
-      const stars = '★'.repeat(p.rating) + '☆'.repeat(5 - p.rating);
-      const color = CAT_COLORS[p.cat] || '#7f8c8d';
+      const stars   = '★'.repeat(p.rating) + '☆'.repeat(5 - p.rating);
+      const color   = CAT_COLORS[p.cat] || '#7f8c8d';
+      const mapsUrl = googleMapsUrl(p.lat, p.lng, p.name);
       return `
         <div class="place-card" data-id="${p.id}">
           <div class="place-card-header">
@@ -690,24 +705,22 @@
           <div class="place-stars">${stars}</div>
           ${p.desc ? `<div class="place-desc">${escHtml(p.desc)}</div>` : ''}
           <div class="card-actions">
-            <button class="btn-sm btn-edit" onclick="editPlace('${p.id}',event)">✏️ Düzenle</button>
+            <button class="btn-sm btn-edit"   onclick="editPlace('${p.id}',event)">✏️ Düzenle</button>
             <button class="btn-sm btn-delete" onclick="deletePlace('${p.id}',event)">🗑️ Sil</button>
+            <a class="btn-sm btn-gmaps" href="${mapsUrl}" target="_blank" onclick="event.stopPropagation()">🗺️ Maps &amp; Yorumlar</a>
           </div>
         </div>`;
     }).join('');
 
-    // click card => fly to marker
     document.querySelectorAll('.place-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-sm')) return;
+        if (e.target.closest('.btn-sm')) return;
         const p = places.find(x => x.id === card.dataset.id);
-        if (p) {
-          map.flyTo([p.lat, p.lng], 12, { duration: 1.2 });
-          // open popup
-          markersLayer.eachLayer(m => {
-            if (Math.abs(m.getLatLng().lat - p.lat) < 0.0001) m.openPopup();
-          });
-        }
+        if (!p) return;
+        gmap.panTo({ lat: p.lat, lng: p.lng });
+        gmap.setZoom(13);
+        const marker = markersMap[p.id];
+        if (marker) openInfoWindow(p, marker);
       });
     });
   }
@@ -717,23 +730,19 @@
     const p = places.find(x => x.id === id);
     if (!p) return;
 
-    editingId = id;
+    editingId  = id;
     pendingLat = p.lat;
     pendingLng = p.lng;
 
-    document.getElementById('input-name').value = p.name;
-    document.getElementById('input-desc').value = p.desc || '';
+    document.getElementById('input-name').value  = p.name;
+    document.getElementById('input-desc').value  = p.desc || '';
     document.getElementById('input-order').value = p.order || '';
     document.getElementById('coord-display').textContent =
       `Enlem: ${p.lat.toFixed(5)}, Boylam: ${p.lng.toFixed(5)}`;
 
-    // cat
-    document.querySelectorAll('.cat-btn').forEach(b => {
-      b.classList.toggle('selected', b.dataset.cat === p.cat);
-    });
+    document.querySelectorAll('.cat-btn').forEach(b =>
+      b.classList.toggle('selected', b.dataset.cat === p.cat));
     selectedCat = p.cat;
-
-    // stars
     selectedRating = p.rating;
     highlightStars(selectedRating);
 
@@ -765,30 +774,25 @@
     if (name === 'list') renderList();
   }
 
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => setTab(btn.dataset.tab));
-  });
+  document.querySelectorAll('.tab-btn').forEach(btn =>
+    btn.addEventListener('click', () => setTab(btn.dataset.tab)));
 
   /* =========================================================
      UTILS
   ========================================================= */
-  function updateHint(msg) {
-    document.getElementById('hint-box').textContent = msg;
-  }
+  function updateHint(msg) { document.getElementById('hint-box').textContent = msg; }
 
   function escHtml(str) {
     return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
-
-  /* =========================================================
-     INIT
-  ========================================================= */
-  renderMarkers();
-  renderList();
 </script>
+
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA-ya47UZkpfWbcmpU8SvQCmUqew8JKkuo&callback=initMap&language=tr&region=TR"
+  async defer>
+</script>
+
 </body>
 </html>
