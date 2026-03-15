@@ -6,375 +6,157 @@
   <title>Türkiye Seyahat Rehberim</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f0f4f8;
-      color: #2d3748;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #2d3748; height: 100vh; display: flex; flex-direction: column; }
 
     header {
       background: linear-gradient(135deg, #c0392b, #e74c3c);
-      color: white;
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      z-index: 10;
+      color: white; padding: 10px 16px;
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10; flex-shrink: 0;
     }
+    header .logo { font-size: 1.4rem; }
+    header h1 { font-size: 1.1rem; font-weight: 700; white-space: nowrap; }
 
-    header h1 { font-size: 1.3rem; font-weight: 700; }
-    header span { font-size: 1.6rem; }
-
-    .app {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
+    /* ROUTE BAR */
+    .route-bar {
+      background: #1a202c;
+      padding: 8px 12px;
+      display: flex; align-items: center; gap: 8px;
+      flex-shrink: 0; overflow-x: auto;
     }
+    .route-bar::-webkit-scrollbar { height: 3px; }
+    .route-bar::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 2px; }
 
-    #map {
-      flex: 1;
-      height: 100%;
+    .route-label { color: #a0aec0; font-size: 0.75rem; font-weight: 600; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .route-chip {
+      padding: 5px 12px; border-radius: 20px; border: 2px solid #4a5568;
+      background: transparent; color: #a0aec0;
+      font-size: 0.78rem; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; white-space: nowrap;
     }
+    .route-chip.active { background: #e74c3c; border-color: #e74c3c; color: white; }
+    .route-chip:hover:not(.active) { border-color: #718096; color: #e2e8f0; }
 
-    /* ---- SIDEBAR ---- */
-    .sidebar {
-      width: 360px;
-      background: white;
-      display: flex;
-      flex-direction: column;
-      border-left: 1px solid #e2e8f0;
-      overflow: hidden;
+    .btn-new-route {
+      padding: 5px 12px; border-radius: 20px;
+      border: 2px dashed #4a5568; background: transparent;
+      color: #718096; font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
     }
+    .btn-new-route:hover { border-color: #e74c3c; color: #e74c3c; }
 
-    .sidebar-tabs {
-      display: flex;
+    .app { display: flex; flex: 1; overflow: hidden; }
+    #map { flex: 1; height: 100%; }
+
+    /* SIDEBAR */
+    .sidebar { width: 360px; background: white; display: flex; flex-direction: column; border-left: 1px solid #e2e8f0; overflow: hidden; }
+
+    .route-header {
+      padding: 10px 14px 8px;
       border-bottom: 1px solid #e2e8f0;
+      display: flex; align-items: center; gap: 8px;
     }
-
-    .tab-btn {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      background: #f7fafc;
-      cursor: pointer;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #718096;
+    .route-title {
+      flex: 1; font-weight: 700; font-size: 0.95rem;
+      color: #1a202c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .route-actions { display: flex; gap: 4px; }
+    .btn-icon {
+      width: 28px; height: 28px; border-radius: 6px; border: none;
+      background: #f0f4f8; color: #718096; cursor: pointer;
+      font-size: 0.85rem; display: flex; align-items: center; justify-content: center;
       transition: all 0.2s;
-      border-bottom: 3px solid transparent;
     }
+    .btn-icon:hover { background: #e2e8f0; color: #2d3748; }
+    .btn-icon.danger:hover { background: #fff5f5; color: #c53030; }
 
-    .tab-btn.active {
-      background: white;
-      color: #c0392b;
-      border-bottom-color: #c0392b;
-    }
+    .sidebar-tabs { display: flex; border-bottom: 1px solid #e2e8f0; }
+    .tab-btn { flex: 1; padding: 9px 4px; border: none; background: #f7fafc; cursor: pointer; font-size: 0.75rem; font-weight: 600; color: #718096; transition: all 0.2s; border-bottom: 3px solid transparent; }
+    .tab-btn.active { background: white; color: #c0392b; border-bottom-color: #c0392b; }
 
-    .tab-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 14px;
-    }
-
+    .tab-content { flex: 1; overflow-y: auto; padding: 14px; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    /* ---- FORM ---- */
     .form-group { margin-bottom: 12px; }
-
-    label {
-      display: block;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: #4a5568;
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    input[type="text"], textarea, select {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid #cbd5e0;
-      border-radius: 6px;
-      font-size: 0.88rem;
-      font-family: inherit;
-      transition: border-color 0.2s;
-      background: #f7fafc;
-    }
-
-    input[type="text"]:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: #c0392b;
-      background: white;
-    }
-
+    label { display: block; font-size: 0.78rem; font-weight: 600; color: #4a5568; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+    input[type="text"], textarea, select { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.88rem; font-family: inherit; transition: border-color 0.2s; background: #f7fafc; }
+    input[type="text"]:focus, textarea:focus, select:focus { outline: none; border-color: #c0392b; background: white; }
     textarea { resize: vertical; min-height: 70px; }
 
-    .categories {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .cat-btn {
-      padding: 5px 10px;
-      border-radius: 20px;
-      border: 2px solid transparent;
-      cursor: pointer;
-      font-size: 0.78rem;
-      font-weight: 600;
-      transition: all 0.2s;
-      background: #f0f4f8;
-      color: #4a5568;
-    }
-
+    .categories { display: flex; flex-wrap: wrap; gap: 6px; }
+    .cat-btn { padding: 5px 10px; border-radius: 20px; border: 2px solid transparent; cursor: pointer; font-size: 0.78rem; font-weight: 600; transition: all 0.2s; background: #f0f4f8; color: #4a5568; }
     .cat-btn.selected { color: white; }
-    .cat-btn[data-cat="arkeoloji"].selected { background: #8b4513; border-color: #8b4513; }
-    .cat-btn[data-cat="doga"].selected      { background: #27ae60; border-color: #27ae60; }
-    .cat-btn[data-cat="gastronomi"].selected { background: #e67e22; border-color: #e67e22; }
-    .cat-btn[data-cat="kultur"].selected    { background: #8e44ad; border-color: #8e44ad; }
-    .cat-btn[data-cat="plaj"].selected      { background: #2980b9; border-color: #2980b9; }
-    .cat-btn[data-cat="diger"].selected     { background: #7f8c8d; border-color: #7f8c8d; }
+    .cat-btn[data-cat="arkeoloji"].selected { background:#8b4513; border-color:#8b4513; }
+    .cat-btn[data-cat="doga"].selected      { background:#27ae60; border-color:#27ae60; }
+    .cat-btn[data-cat="gastronomi"].selected{ background:#e67e22; border-color:#e67e22; }
+    .cat-btn[data-cat="kultur"].selected    { background:#8e44ad; border-color:#8e44ad; }
+    .cat-btn[data-cat="plaj"].selected      { background:#2980b9; border-color:#2980b9; }
+    .cat-btn[data-cat="diger"].selected     { background:#7f8c8d; border-color:#7f8c8d; }
 
     .stars { display: flex; gap: 4px; margin-top: 2px; }
-    .star {
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: #cbd5e0;
-      transition: color 0.15s;
-    }
+    .star { font-size: 1.5rem; cursor: pointer; color: #cbd5e0; transition: color 0.15s; }
     .star.active { color: #f6ad55; }
 
-    .order-input {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .order-input { display: flex; align-items: center; gap: 8px; }
+    .order-input input[type="number"] { width: 70px; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.88rem; background: #f7fafc; }
 
-    .order-input input[type="number"] {
-      width: 70px;
-      padding: 8px 10px;
-      border: 1px solid #cbd5e0;
-      border-radius: 6px;
-      font-size: 0.88rem;
-      background: #f7fafc;
-    }
+    .coord-display { font-size: 0.78rem; color: #718096; margin-top: 4px; }
+    .hint-box { background: #ebf8ff; border: 1px solid #bee3f8; border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; color: #2b6cb0; margin-bottom: 12px; }
 
-    .coord-display {
-      font-size: 0.78rem;
-      color: #718096;
-      margin-top: 4px;
-    }
-
-    .hint-box {
-      background: #ebf8ff;
-      border: 1px solid #bee3f8;
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 0.82rem;
-      color: #2b6cb0;
-      margin-bottom: 12px;
-    }
-
-    .btn-save {
-      width: 100%;
-      padding: 10px;
-      background: linear-gradient(135deg, #c0392b, #e74c3c);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-
+    .btn-save { width: 100%; padding: 10px; background: linear-gradient(135deg,#c0392b,#e74c3c); color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
     .btn-save:hover { opacity: 0.9; }
     .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ---- LIST ---- */
-    .list-controls {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
+    .list-controls { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .list-controls select { flex: 1; min-width: 110px; padding: 6px 8px; font-size: 0.8rem; }
 
-    .list-controls select {
-      flex: 1;
-      min-width: 110px;
-      padding: 6px 8px;
-      font-size: 0.8rem;
-    }
-
-    .place-card {
-      background: #f7fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .place-card:hover {
-      border-color: #c0392b;
-      box-shadow: 0 2px 8px rgba(192,57,43,0.15);
-      transform: translateY(-1px);
-    }
-
-    .place-card-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 6px;
-    }
-
-    .place-order-badge {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: #c0392b;
-      color: white;
-      font-size: 0.75rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
+    .place-card { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; }
+    .place-card:hover { border-color: #c0392b; box-shadow: 0 2px 8px rgba(192,57,43,0.15); transform: translateY(-1px); }
+    .place-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+    .place-order-badge { width: 26px; height: 26px; border-radius: 50%; background: #c0392b; color: white; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .place-name { font-weight: 700; font-size: 0.92rem; flex: 1; }
-
-    .place-cat-badge {
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 20px;
-      color: white;
-      white-space: nowrap;
-    }
-
+    .place-cat-badge { font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; color: white; white-space: nowrap; }
     .place-stars { font-size: 0.8rem; margin: 4px 0 2px; }
-    .place-desc {
-      font-size: 0.8rem;
-      color: #718096;
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .card-actions {
-      display: flex;
-      gap: 6px;
-      margin-top: 8px;
-      flex-wrap: wrap;
-    }
-
-    .btn-sm {
-      padding: 4px 10px;
-      border-radius: 6px;
-      border: none;
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-    }
-
-    .btn-edit    { background: #ebf8ff; color: #2b6cb0; }
-    .btn-delete  { background: #fff5f5; color: #c53030; }
-    .btn-gmaps   { background: #e8f5e9; color: #2e7d32; }
+    .place-desc { font-size: 0.8rem; color: #718096; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-sm { padding: 4px 10px; border-radius: 6px; border: none; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; }
+    .btn-edit   { background:#ebf8ff; color:#2b6cb0; }
+    .btn-delete { background:#fff5f5; color:#c53030; }
+    .btn-gmaps  { background:#e8f5e9; color:#2e7d32; }
     .btn-sm:hover { opacity: 0.75; }
 
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: #a0aec0;
-    }
+    .empty-state { text-align: center; padding: 40px 20px; color: #a0aec0; }
     .empty-state .emoji { font-size: 3rem; margin-bottom: 10px; }
 
-    /* Google Maps InfoWindow custom styles */
-    .gm-popup {
-      font-family: 'Segoe UI', sans-serif;
-      min-width: 200px;
-      max-width: 260px;
-    }
-    .gm-popup-name {
-      font-weight: 700;
-      font-size: 1rem;
-      margin-bottom: 5px;
-      color: #1a202c;
-    }
-    .gm-popup-cat {
-      font-size: 0.72rem;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 20px;
-      color: white;
-      display: inline-block;
-      margin-bottom: 7px;
-    }
+    .gm-popup { font-family: 'Segoe UI', sans-serif; min-width: 200px; max-width: 260px; }
+    .gm-popup-name { font-weight: 700; font-size: 1rem; margin-bottom: 5px; color: #1a202c; }
+    .gm-popup-cat { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; color: white; display: inline-block; margin-bottom: 7px; }
     .gm-popup-stars { font-size: 0.9rem; margin-bottom: 5px; color: #f6ad55; }
-    .gm-popup-desc  { font-size: 0.82rem; color: #555; line-height: 1.45; margin-bottom: 8px; }
+    .gm-popup-desc { font-size: 0.82rem; color: #555; line-height: 1.45; margin-bottom: 8px; }
     .gm-popup-order { font-size: 0.72rem; color: #999; margin-bottom: 8px; }
-    .gm-popup-link  {
-      display: inline-block;
-      padding: 5px 12px;
-      background: #4285f4;
-      color: white;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      text-decoration: none;
-    }
+    .gm-popup-route { font-size: 0.72rem; color: #888; margin-bottom: 6px; font-style: italic; }
+    .gm-popup-link { display: inline-block; padding: 5px 12px; background: #4285f4; color: white; border-radius: 6px; font-size: 0.78rem; font-weight: 600; text-decoration: none; }
     .gm-popup-link:hover { background: #3367d6; }
 
-    .btn-export {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.88rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      background: linear-gradient(135deg, #2d3748, #4a5568);
-      color: white;
-    }
-    .btn-export-json { background: linear-gradient(135deg, #276749, #38a169); }
-    .btn-export-import { background: linear-gradient(135deg, #2b4c8c, #3b82f6); display:block; }
+    .btn-export { width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; background: linear-gradient(135deg,#2d3748,#4a5568); color: white; }
+    .btn-export-json   { background: linear-gradient(135deg,#276749,#38a169); }
+    .btn-export-import { background: linear-gradient(135deg,#2b4c8c,#3b82f6); display: block; }
     .btn-export:hover { opacity: 0.85; }
 
-    /* scrollbar */
+    .no-route-msg { text-align: center; padding: 30px 20px; color: #a0aec0; font-size: 0.88rem; }
+
     .tab-content::-webkit-scrollbar { width: 5px; }
     .tab-content::-webkit-scrollbar-track { background: #f0f4f8; }
     .tab-content::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
 
-    /* PRINT STYLES */
     @media print {
       body > *:not(#print-area) { display: none !important; }
-      #print-area {
-        display: block !important;
-        font-family: 'Segoe UI', sans-serif;
-        color: #1a202c;
-        padding: 20px;
-      }
+      #print-area { display: block !important; font-family: 'Segoe UI', sans-serif; color: #1a202c; padding: 20px; }
       .print-header { text-align: center; margin-bottom: 24px; border-bottom: 3px solid #c0392b; padding-bottom: 12px; }
       .print-header h1 { font-size: 1.8rem; color: #c0392b; margin-bottom: 4px; }
       .print-header .print-meta { font-size: 0.9rem; color: #718096; }
-      .print-day { margin-bottom: 20px; }
       .print-day-title { font-size: 1.1rem; font-weight: 700; color: #c0392b; border-left: 4px solid #c0392b; padding-left: 10px; margin-bottom: 10px; }
       .print-item { display: flex; gap: 12px; margin-bottom: 10px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; page-break-inside: avoid; }
       .print-num { width: 28px; height: 28px; border-radius: 50%; background: #c0392b; color: white; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -392,14 +174,30 @@
 <body>
 
 <header>
-  <span>🗺️</span>
+  <span class="logo">🗺️</span>
   <h1>Türkiye Seyahat Rehberim</h1>
 </header>
+
+<!-- ROUTE SWITCHER BAR -->
+<div class="route-bar" id="route-bar">
+  <span class="route-label">Rotalar:</span>
+  <div id="route-chips"></div>
+  <button class="btn-new-route" id="btn-new-route">+ Yeni Rota</button>
+</div>
 
 <div class="app">
   <div id="map"></div>
 
   <div class="sidebar">
+    <!-- Active route name + rename/delete -->
+    <div class="route-header" id="route-header">
+      <div class="route-title" id="route-title-display">—</div>
+      <div class="route-actions">
+        <button class="btn-icon" id="btn-rename-route" title="Rotayı Yeniden Adlandır">✏️</button>
+        <button class="btn-icon danger" id="btn-delete-route" title="Rotayı Sil">🗑️</button>
+      </div>
+    </div>
+
     <div class="sidebar-tabs">
       <button class="tab-btn active" data-tab="add">+ Nokta Ekle</button>
       <button class="tab-btn" data-tab="list">Listele</button>
@@ -407,55 +205,53 @@
     </div>
 
     <div class="tab-content">
+
       <!-- ADD TAB -->
       <div class="tab-panel active" id="tab-add">
-        <div class="hint-box" id="hint-box">
-          📍 Haritaya tıklayarak bir konum seçin.
+        <div id="no-route-add" class="no-route-msg" style="display:none">
+          Önce üstten bir rota seçin veya <b>+ Yeni Rota</b> oluşturun.
         </div>
-
-        <div class="form-group">
-          <label>Konum Adı</label>
-          <input type="text" id="input-name" placeholder="Yer adı girin..." />
-          <div class="coord-display" id="coord-display">Henüz konum seçilmedi</div>
-        </div>
-
-        <div class="form-group">
-          <label>Kategori</label>
-          <div class="categories">
-            <button class="cat-btn" data-cat="arkeoloji">🏛️ Arkeoloji</button>
-            <button class="cat-btn" data-cat="doga">🌿 Doğa</button>
-            <button class="cat-btn" data-cat="gastronomi">🍽️ Gastronomi</button>
-            <button class="cat-btn" data-cat="kultur">🎭 Kültürel</button>
-            <button class="cat-btn" data-cat="plaj">🏖️ Plaj</button>
-            <button class="cat-btn" data-cat="diger">📌 Diğer</button>
+        <div id="add-form">
+          <div class="hint-box" id="hint-box">📍 Haritaya tıklayarak bir konum seçin.</div>
+          <div class="form-group">
+            <label>Konum Adı</label>
+            <input type="text" id="input-name" placeholder="Yer adı girin..." />
+            <div class="coord-display" id="coord-display">Henüz konum seçilmedi</div>
           </div>
-        </div>
-
-        <div class="form-group">
-          <label>Puan</label>
-          <div class="stars" id="stars">
-            <span class="star" data-val="1">★</span>
-            <span class="star" data-val="2">★</span>
-            <span class="star" data-val="3">★</span>
-            <span class="star" data-val="4">★</span>
-            <span class="star" data-val="5">★</span>
+          <div class="form-group">
+            <label>Kategori</label>
+            <div class="categories">
+              <button class="cat-btn" data-cat="arkeoloji">🏛️ Arkeoloji</button>
+              <button class="cat-btn" data-cat="doga">🌿 Doğa</button>
+              <button class="cat-btn" data-cat="gastronomi">🍽️ Gastronomi</button>
+              <button class="cat-btn" data-cat="kultur">🎭 Kültürel</button>
+              <button class="cat-btn" data-cat="plaj">🏖️ Plaj</button>
+              <button class="cat-btn" data-cat="diger">📌 Diğer</button>
+            </div>
           </div>
-        </div>
-
-        <div class="form-group">
-          <label>Sıra No <span style="font-weight:400;text-transform:none;font-size:0.75rem">(isteğe bağlı)</span></label>
-          <div class="order-input">
-            <input type="number" id="input-order" min="1" placeholder="1" />
-            <span style="font-size:0.8rem;color:#718096">gezi sırası</span>
+          <div class="form-group">
+            <label>Puan</label>
+            <div class="stars" id="stars">
+              <span class="star" data-val="1">★</span>
+              <span class="star" data-val="2">★</span>
+              <span class="star" data-val="3">★</span>
+              <span class="star" data-val="4">★</span>
+              <span class="star" data-val="5">★</span>
+            </div>
           </div>
+          <div class="form-group">
+            <label>Sıra No <span style="font-weight:400;text-transform:none;font-size:0.75rem">(isteğe bağlı)</span></label>
+            <div class="order-input">
+              <input type="number" id="input-order" min="1" placeholder="1" />
+              <span style="font-size:0.8rem;color:#718096">gezi sırası</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Açıklama / Notlar</label>
+            <textarea id="input-desc" placeholder="Notlarınızı buraya yazın..."></textarea>
+          </div>
+          <button class="btn-save" id="btn-save" disabled>Kaydet</button>
         </div>
-
-        <div class="form-group">
-          <label>Açıklama / Notlar</label>
-          <textarea id="input-desc" placeholder="Notlarınızı buraya yazın..."></textarea>
-        </div>
-
-        <button class="btn-save" id="btn-save" disabled>Kaydet</button>
       </div>
 
       <!-- LIST TAB -->
@@ -483,152 +279,199 @@
       <!-- EXPORT TAB -->
       <div class="tab-panel" id="tab-export">
         <div class="form-group">
-          <label>Gezi Adı</label>
-          <input type="text" id="export-title" placeholder="örn. Ege Turu 2025" />
-        </div>
-        <div class="form-group">
           <label>Tarih <span style="font-weight:400;text-transform:none;font-size:0.75rem">(isteğe bağlı)</span></label>
           <input type="text" id="export-date" placeholder="örn. 10-13 Haziran 2025" />
         </div>
         <div class="form-group">
-          <label>Notlar <span style="font-weight:400;text-transform:none;font-size:0.75rem">(isteğe bağlı)</span></label>
+          <label>Genel Notlar <span style="font-weight:400;text-transform:none;font-size:0.75rem">(isteğe bağlı)</span></label>
           <textarea id="export-notes" placeholder="Genel gezi notları..."></textarea>
         </div>
-
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
-          <button class="btn-export" id="btn-print">🖨️ PDF olarak Kaydet / Yazdır</button>
-          <button class="btn-export btn-export-json" id="btn-json-export">💾 JSON Yedek İndir</button>
+          <button class="btn-export" id="btn-print">🖨️ Bu Rotayı PDF / Yazdır</button>
+          <button class="btn-export btn-export-json" id="btn-json-export">💾 Bu Rotayı JSON Olarak İndir</button>
+          <button class="btn-export btn-export-json" id="btn-json-export-all" style="background:linear-gradient(135deg,#1a365d,#2b6cb0)">💾 Tüm Rotaları JSON Olarak İndir</button>
           <label class="btn-export btn-export-import" style="cursor:pointer;text-align:center">
-            📂 JSON Yedek Yükle
+            📂 JSON Yedek Yükle (Geri Yükle)
             <input type="file" id="json-import-file" accept=".json" style="display:none" />
           </label>
         </div>
-
         <div class="hint-box" style="margin-top:12px;font-size:0.78rem">
-          💡 <b>PDF:</b> Tarayıcının yazdır ekranı açılır, "PDF olarak kaydet" seç.<br><br>
-          💡 <b>JSON:</b> Tüm noktalarını yedekler. Bilgisayar değiştirsen bile geri yükleyebilirsin.
+          💡 <b>Bu Rotayı İndir:</b> Sadece aktif rotayı kaydeder.<br><br>
+          💡 <b>Tüm Rotaları İndir:</b> Tüm rotalarını tek dosyada yedekler.<br><br>
+          💡 <b>Geri Yükle:</b> Daha önce indirdiğin JSON'ı yükle.
         </div>
       </div>
+
     </div>
   </div>
 </div>
 
-<!-- PRINT TEMPLATE -->
 <div id="print-area" style="display:none"></div>
 
 <script>
   /* =========================================================
-     DATA
+     DATA MODEL
+     routes: { [id]: { id, name, places: [...] } }
+     activeRouteId: string | null
   ========================================================= */
-  const STORAGE_KEY = 'turkey_travel_places';
-  let places = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  let editingId = null;
+  const STORAGE_KEY = 'turkey_travel_v2';
 
-  const CAT_LABELS = {
-    arkeoloji:  '🏛️ Arkeoloji',
-    doga:       '🌿 Doğa',
-    gastronomi: '🍽️ Gastronomi',
-    kultur:     '🎭 Kültürel',
-    plaj:       '🏖️ Plaj',
-    diger:      '📌 Diğer',
-  };
+  function loadData() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { routes: {}, activeRouteId: null }; }
+    catch { return { routes: {}, activeRouteId: null }; }
+  }
 
-  const CAT_COLORS = {
-    arkeoloji:  '#8b4513',
-    doga:       '#27ae60',
-    gastronomi: '#e67e22',
-    kultur:     '#8e44ad',
-    plaj:       '#2980b9',
-    diger:      '#7f8c8d',
-  };
+  let db = loadData();
 
-  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(places)); }
+  function saveDb() { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
   function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
-  function googleMapsUrl(lat, lng, name) {
-    return `https://www.google.com/maps/search/${encodeURIComponent(name)}/@${lat},${lng},15z`;
+  function activeRoute() { return db.activeRouteId ? db.routes[db.activeRouteId] : null; }
+  function activePlaces() { const r = activeRoute(); return r ? r.places : []; }
+
+  const CAT_LABELS = { arkeoloji:'🏛️ Arkeoloji', doga:'🌿 Doğa', gastronomi:'🍽️ Gastronomi', kultur:'🎭 Kültürel', plaj:'🏖️ Plaj', diger:'📌 Diğer' };
+  const CAT_COLORS = { arkeoloji:'#8b4513', doga:'#27ae60', gastronomi:'#e67e22', kultur:'#8e44ad', plaj:'#2980b9', diger:'#7f8c8d' };
+
+  function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function googleMapsUrl(lat, lng, name) { return `https://www.google.com/maps/search/${encodeURIComponent(name)}/@${lat},${lng},15z`; }
+  function updateHint(msg) { document.getElementById('hint-box').textContent = msg; }
+
+  /* =========================================================
+     ROUTE MANAGEMENT
+  ========================================================= */
+  function createRoute(name) {
+    const id = genId();
+    db.routes[id] = { id, name, places: [] };
+    db.activeRouteId = id;
+    saveDb();
+    renderRouteBar();
+    renderSidebarRoute();
+    renderMarkers();
+    renderList();
   }
+
+  function switchRoute(id) {
+    if (!db.routes[id]) return;
+    db.activeRouteId = id;
+    saveDb();
+    renderRouteBar();
+    renderSidebarRoute();
+    renderMarkers();
+    renderList();
+    resetForm();
+  }
+
+  function renameRoute(id) {
+    const route = db.routes[id];
+    if (!route) return;
+    const newName = prompt('Yeni rota adı:', route.name);
+    if (!newName || !newName.trim()) return;
+    route.name = newName.trim();
+    saveDb();
+    renderRouteBar();
+    renderSidebarRoute();
+  }
+
+  function deleteRoute(id) {
+    const route = db.routes[id];
+    if (!route) return;
+    if (!confirm(`"${route.name}" rotasını ve içindeki tüm noktaları silmek istiyor musunuz?`)) return;
+    delete db.routes[id];
+    const remaining = Object.keys(db.routes);
+    db.activeRouteId = remaining.length > 0 ? remaining[remaining.length - 1] : null;
+    saveDb();
+    renderRouteBar();
+    renderSidebarRoute();
+    renderMarkers();
+    renderList();
+    resetForm();
+  }
+
+  function renderRouteBar() {
+    const container = document.getElementById('route-chips');
+    const routes = Object.values(db.routes);
+    container.innerHTML = routes.map(r =>
+      `<button class="route-chip${r.id === db.activeRouteId ? ' active' : ''}" data-id="${r.id}">${escHtml(r.name)}</button>`
+    ).join('');
+    container.querySelectorAll('.route-chip').forEach(chip =>
+      chip.addEventListener('click', () => switchRoute(chip.dataset.id))
+    );
+  }
+
+  function renderSidebarRoute() {
+    const route = activeRoute();
+    const titleEl = document.getElementById('route-title-display');
+    const addForm = document.getElementById('add-form');
+    const noRoute = document.getElementById('no-route-add');
+
+    if (route) {
+      titleEl.textContent = route.name;
+      addForm.style.display = '';
+      noRoute.style.display = 'none';
+    } else {
+      titleEl.textContent = '— Rota seçilmedi —';
+      addForm.style.display = 'none';
+      noRoute.style.display = '';
+    }
+  }
+
+  document.getElementById('btn-new-route').addEventListener('click', () => {
+    const name = prompt('Yeni rota adı:', 'Yeni Rota');
+    if (!name || !name.trim()) return;
+    createRoute(name.trim());
+    setTab('add');
+  });
+
+  document.getElementById('btn-rename-route').addEventListener('click', () => {
+    if (db.activeRouteId) renameRoute(db.activeRouteId);
+  });
+
+  document.getElementById('btn-delete-route').addEventListener('click', () => {
+    if (db.activeRouteId) deleteRoute(db.activeRouteId);
+  });
 
   /* =========================================================
      GOOGLE MAPS
   ========================================================= */
-  let gmap;
-  let infoWindow;
-  let markersMap = {}; // id -> google.maps.Marker
-  let tempMarker = null;
-  let pendingLat = null;
-  let pendingLng = null;
+  let gmap, infoWindow, markersMap = {}, tempMarker = null, pendingLat = null, pendingLng = null;
 
   function initMap() {
     gmap = new google.maps.Map(document.getElementById('map'), {
-      center: { lat: 39.0, lng: 35.0 },
-      zoom: 6,
-      mapTypeControl: true,
-      streetViewControl: true,
-      fullscreenControl: true,
-      mapId: 'DEMO_MAP_ID',
+      center: { lat: 39.0, lng: 35.0 }, zoom: 6,
+      mapTypeControl: true, streetViewControl: true, fullscreenControl: true,
     });
-
     infoWindow = new google.maps.InfoWindow();
 
     gmap.addListener('click', (e) => {
-      pendingLat = e.latLng.lat();
-      pendingLng = e.latLng.lng();
-
+      if (!activeRoute()) { alert('Önce bir rota seçin veya yeni rota oluşturun.'); return; }
+      pendingLat = e.latLng.lat(); pendingLng = e.latLng.lng();
       if (tempMarker) tempMarker.setMap(null);
-
       tempMarker = new google.maps.Marker({
-        position: { lat: pendingLat, lng: pendingLng },
-        map: gmap,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 9,
-          fillColor: '#e74c3c',
-          fillOpacity: 0.85,
-          strokeColor: '#fff',
-          strokeWeight: 2,
-        },
+        position: { lat: pendingLat, lng: pendingLng }, map: gmap,
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#e74c3c', fillOpacity: 0.85, strokeColor: '#fff', strokeWeight: 2 },
         zIndex: 999,
       });
-
-      document.getElementById('coord-display').textContent =
-        `Enlem: ${pendingLat.toFixed(5)}, Boylam: ${pendingLng.toFixed(5)}`;
-
-      setTab('add');
-      updateHint('✅ Konum seçildi! Detayları doldurup kaydedin.');
-      checkSaveBtn();
+      document.getElementById('coord-display').textContent = `Enlem: ${pendingLat.toFixed(5)}, Boylam: ${pendingLng.toFixed(5)}`;
+      setTab('add'); updateHint('✅ Konum seçildi! Detayları doldurup kaydedin.'); checkSaveBtn();
     });
 
+    renderRouteBar();
+    renderSidebarRoute();
     renderMarkers();
+    renderList();
   }
 
   function makePinSvg(color) {
-    const encoded = encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="42" viewBox="0 0 30 42">
-        <path d="M15 0 C6.716 0 0 6.716 0 15 C0 26.25 15 42 15 42 C15 42 30 26.25 30 15 C30 6.716 23.284 0 15 0 Z"
-              fill="${color}" stroke="white" stroke-width="2"/>
-        <circle cx="15" cy="15" r="7" fill="white" fill-opacity="0.85"/>
-      </svg>`);
-    return {
-      url: 'data:image/svg+xml,' + encoded,
-      scaledSize: new google.maps.Size(30, 42),
-      anchor: new google.maps.Point(15, 42),
-    };
+    const enc = encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="30" height="42" viewBox="0 0 30 42"><path d="M15 0 C6.716 0 0 6.716 0 15 C0 26.25 15 42 15 42 C15 42 30 26.25 30 15 C30 6.716 23.284 0 15 0 Z" fill="${color}" stroke="white" stroke-width="2"/><circle cx="15" cy="15" r="7" fill="white" fill-opacity="0.85"/></svg>`);
+    return { url: 'data:image/svg+xml,' + enc, scaledSize: new google.maps.Size(30, 42), anchor: new google.maps.Point(15, 42) };
   }
 
   function renderMarkers() {
-    // Remove old markers
-    Object.values(markersMap).forEach(m => m.setMap(null));
-    markersMap = {};
-
+    Object.values(markersMap).forEach(m => m.setMap(null)); markersMap = {};
+    // Show only active route's markers
+    const places = activePlaces();
     places.forEach(p => {
-      const marker = new google.maps.Marker({
-        position: { lat: p.lat, lng: p.lng },
-        map: gmap,
-        title: p.name,
-        icon: makePinSvg(CAT_COLORS[p.cat] || '#7f8c8d'),
-      });
-
+      const marker = new google.maps.Marker({ position: { lat: p.lat, lng: p.lng }, map: gmap, title: p.name, icon: makePinSvg(CAT_COLORS[p.cat] || '#7f8c8d') });
       marker.addListener('click', () => openInfoWindow(p, marker));
       markersMap[p.id] = marker;
     });
@@ -636,81 +479,55 @@
 
   function openInfoWindow(p, marker) {
     const stars = '★'.repeat(p.rating) + '☆'.repeat(5 - p.rating);
-    const mapsUrl = googleMapsUrl(p.lat, p.lng, p.name);
+    const route = activeRoute();
     infoWindow.setContent(`
       <div class="gm-popup">
         <div class="gm-popup-name">${escHtml(p.name)}</div>
+        ${route ? `<div class="gm-popup-route">📍 ${escHtml(route.name)}</div>` : ''}
         <div class="gm-popup-cat" style="background:${CAT_COLORS[p.cat]}">${CAT_LABELS[p.cat]}</div>
         <div class="gm-popup-stars">${stars}</div>
         ${p.desc ? `<div class="gm-popup-desc">${escHtml(p.desc)}</div>` : ''}
         ${p.order ? `<div class="gm-popup-order">Sıra: #${p.order}</div>` : ''}
-        <a class="gm-popup-link" href="${mapsUrl}" target="_blank">
-          🗺️ Google Maps'te Aç &amp; Yorumlar
-        </a>
+        <a class="gm-popup-link" href="${googleMapsUrl(p.lat, p.lng, p.name)}" target="_blank">🗺️ Google Maps &amp; Yorumlar</a>
       </div>`);
     infoWindow.open(gmap, marker);
   }
 
   /* =========================================================
-     FORM STATE
+     FORM
   ========================================================= */
-  let selectedCat = null;
-  let selectedRating = 0;
+  let selectedCat = null, selectedRating = 0, editingId = null;
 
-  document.querySelectorAll('.cat-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      selectedCat = btn.dataset.cat;
-      checkSaveBtn();
-    });
-  });
+  document.querySelectorAll('.cat-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected'); selectedCat = btn.dataset.cat; checkSaveBtn();
+  }));
 
   const starEls = document.querySelectorAll('.star');
   starEls.forEach(star => {
     star.addEventListener('mouseover', () => highlightStars(+star.dataset.val));
     star.addEventListener('mouseout', () => highlightStars(selectedRating));
-    star.addEventListener('click', () => {
-      selectedRating = +star.dataset.val;
-      highlightStars(selectedRating);
-      checkSaveBtn();
-    });
+    star.addEventListener('click', () => { selectedRating = +star.dataset.val; highlightStars(selectedRating); checkSaveBtn(); });
   });
-
-  function highlightStars(n) {
-    starEls.forEach(s => s.classList.toggle('active', +s.dataset.val <= n));
-  }
-
+  function highlightStars(n) { starEls.forEach(s => s.classList.toggle('active', +s.dataset.val <= n)); }
   document.getElementById('input-name').addEventListener('input', checkSaveBtn);
+  function checkSaveBtn() { document.getElementById('btn-save').disabled = !(pendingLat !== null && selectedCat && selectedRating > 0 && document.getElementById('input-name').value.trim() && activeRoute()); }
 
-  function checkSaveBtn() {
-    const ok = pendingLat !== null && selectedCat && selectedRating > 0
-               && document.getElementById('input-name').value.trim();
-    document.getElementById('btn-save').disabled = !ok;
-  }
-
-  /* =========================================================
-     SAVE
-  ========================================================= */
   document.getElementById('btn-save').addEventListener('click', () => {
-    const name  = document.getElementById('input-name').value.trim();
-    const desc  = document.getElementById('input-desc').value.trim();
+    const route = activeRoute(); if (!route) return;
+    const name = document.getElementById('input-name').value.trim();
+    const desc = document.getElementById('input-desc').value.trim();
     const order = parseInt(document.getElementById('input-order').value) || null;
 
     if (editingId) {
-      const idx = places.findIndex(p => p.id === editingId);
-      if (idx >= 0) {
-        places[idx] = { ...places[idx], name, desc, cat: selectedCat, rating: selectedRating, order };
-      }
+      const idx = route.places.findIndex(p => p.id === editingId);
+      if (idx >= 0) route.places[idx] = { ...route.places[idx], name, desc, cat: selectedCat, rating: selectedRating, order };
       editingId = null;
     } else {
-      places.push({ id: genId(), name, desc, cat: selectedCat, rating: selectedRating, order, lat: pendingLat, lng: pendingLng });
+      route.places.push({ id: genId(), name, desc, cat: selectedCat, rating: selectedRating, order, lat: pendingLat, lng: pendingLng });
     }
 
-    save();
-    renderMarkers();
-    renderList();
-    resetForm();
+    saveDb(); renderMarkers(); renderList(); resetForm();
     updateHint('📍 Haritaya tıklayarak bir konum seçin.');
     setTab('list');
   });
@@ -721,119 +538,78 @@
     document.getElementById('input-order').value = '';
     document.getElementById('coord-display').textContent = 'Henüz konum seçilmedi';
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
-    selectedCat = null;
-    selectedRating = 0;
-    highlightStars(0);
-    pendingLat = null;
-    pendingLng = null;
+    selectedCat = null; selectedRating = 0; highlightStars(0);
+    pendingLat = null; pendingLng = null;
     if (tempMarker) { tempMarker.setMap(null); tempMarker = null; }
-    editingId = null;
-    checkSaveBtn();
+    editingId = null; checkSaveBtn();
   }
 
   /* =========================================================
      LIST
   ========================================================= */
   function renderList() {
-    const sortBy    = document.getElementById('sort-by').value;
+    const sortBy = document.getElementById('sort-by').value;
     const filterCat = document.getElementById('filter-cat').value;
-
-    let list = [...places];
+    let list = [...activePlaces()];
     if (filterCat !== 'all') list = list.filter(p => p.cat === filterCat);
-
-    if (sortBy === 'order') {
-      list.sort((a, b) => {
-        if (a.order == null && b.order == null) return 0;
-        if (a.order == null) return 1;
-        if (b.order == null) return -1;
-        return a.order - b.order;
-      });
-    } else if (sortBy === 'rating') {
-      list.sort((a, b) => b.rating - a.rating);
-    } else if (sortBy === 'name') {
-      list.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
-    } else if (sortBy === 'cat') {
-      list.sort((a, b) => a.cat.localeCompare(b.cat));
-    }
+    if (sortBy === 'order') list.sort((a,b)=>{if(a.order==null&&b.order==null)return 0;if(a.order==null)return 1;if(b.order==null)return -1;return a.order-b.order;});
+    else if (sortBy === 'rating') list.sort((a,b)=>b.rating-a.rating);
+    else if (sortBy === 'name') list.sort((a,b)=>a.name.localeCompare(b.name,'tr'));
+    else if (sortBy === 'cat') list.sort((a,b)=>a.cat.localeCompare(b.cat));
 
     const container = document.getElementById('place-list');
-
-    if (list.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <div class="emoji">🗺️</div>
-          <div>Henüz nokta eklenmedi.<br>Haritaya tıklayarak başlayın!</div>
-        </div>`;
-      return;
-    }
+    if (!activeRoute()) { container.innerHTML = `<div class="no-route-msg">Bir rota seçin.</div>`; return; }
+    if (list.length === 0) { container.innerHTML = `<div class="empty-state"><div class="emoji">🗺️</div><div>Bu rotada henüz nokta yok.<br>Haritaya tıklayarak ekleyin!</div></div>`; return; }
 
     container.innerHTML = list.map(p => {
-      const stars   = '★'.repeat(p.rating) + '☆'.repeat(5 - p.rating);
-      const color   = CAT_COLORS[p.cat] || '#7f8c8d';
-      const mapsUrl = googleMapsUrl(p.lat, p.lng, p.name);
-      return `
-        <div class="place-card" data-id="${p.id}">
-          <div class="place-card-header">
-            <div class="place-order-badge">${p.order != null ? p.order : '·'}</div>
-            <div class="place-name">${escHtml(p.name)}</div>
-            <div class="place-cat-badge" style="background:${color}">${CAT_LABELS[p.cat]}</div>
-          </div>
-          <div class="place-stars">${stars}</div>
-          ${p.desc ? `<div class="place-desc">${escHtml(p.desc)}</div>` : ''}
-          <div class="card-actions">
-            <button class="btn-sm btn-edit"   onclick="editPlace('${p.id}',event)">✏️ Düzenle</button>
-            <button class="btn-sm btn-delete" onclick="deletePlace('${p.id}',event)">🗑️ Sil</button>
-            <a class="btn-sm btn-gmaps" href="${mapsUrl}" target="_blank" onclick="event.stopPropagation()">🗺️ Maps &amp; Yorumlar</a>
-          </div>
-        </div>`;
+      const stars = '★'.repeat(p.rating)+'☆'.repeat(5-p.rating);
+      const color = CAT_COLORS[p.cat]||'#7f8c8d';
+      return `<div class="place-card" data-id="${p.id}">
+        <div class="place-card-header">
+          <div class="place-order-badge">${p.order!=null?p.order:'·'}</div>
+          <div class="place-name">${escHtml(p.name)}</div>
+          <div class="place-cat-badge" style="background:${color}">${CAT_LABELS[p.cat]}</div>
+        </div>
+        <div class="place-stars">${stars}</div>
+        ${p.desc?`<div class="place-desc">${escHtml(p.desc)}</div>`:''}
+        <div class="card-actions">
+          <button class="btn-sm btn-edit" onclick="editPlace('${p.id}',event)">✏️ Düzenle</button>
+          <button class="btn-sm btn-delete" onclick="deletePlace('${p.id}',event)">🗑️ Sil</button>
+          <a class="btn-sm btn-gmaps" href="${googleMapsUrl(p.lat,p.lng,p.name)}" target="_blank" onclick="event.stopPropagation()">🗺️ Maps</a>
+        </div>
+      </div>`;
     }).join('');
 
     document.querySelectorAll('.place-card').forEach(card => {
       card.addEventListener('click', (e) => {
         if (e.target.closest('.btn-sm')) return;
-        const p = places.find(x => x.id === card.dataset.id);
+        const p = activePlaces().find(x => x.id === card.dataset.id);
         if (!p) return;
-        gmap.panTo({ lat: p.lat, lng: p.lng });
-        gmap.setZoom(13);
-        const marker = markersMap[p.id];
-        if (marker) openInfoWindow(p, marker);
+        gmap.panTo({ lat: p.lat, lng: p.lng }); gmap.setZoom(13);
+        const m = markersMap[p.id]; if (m) openInfoWindow(p, m);
       });
     });
   }
 
   function editPlace(id, e) {
     e.stopPropagation();
-    const p = places.find(x => x.id === id);
-    if (!p) return;
-
-    editingId  = id;
-    pendingLat = p.lat;
-    pendingLng = p.lng;
-
-    document.getElementById('input-name').value  = p.name;
-    document.getElementById('input-desc').value  = p.desc || '';
+    const p = activePlaces().find(x => x.id === id); if (!p) return;
+    editingId = id; pendingLat = p.lat; pendingLng = p.lng;
+    document.getElementById('input-name').value = p.name;
+    document.getElementById('input-desc').value = p.desc || '';
     document.getElementById('input-order').value = p.order || '';
-    document.getElementById('coord-display').textContent =
-      `Enlem: ${p.lat.toFixed(5)}, Boylam: ${p.lng.toFixed(5)}`;
-
-    document.querySelectorAll('.cat-btn').forEach(b =>
-      b.classList.toggle('selected', b.dataset.cat === p.cat));
-    selectedCat = p.cat;
-    selectedRating = p.rating;
-    highlightStars(selectedRating);
-
-    checkSaveBtn();
-    setTab('add');
-    updateHint('✏️ Düzenleme modu — değişikliklerinizi yapıp kaydedin.');
+    document.getElementById('coord-display').textContent = `Enlem: ${p.lat.toFixed(5)}, Boylam: ${p.lng.toFixed(5)}`;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('selected', b.dataset.cat === p.cat));
+    selectedCat = p.cat; selectedRating = p.rating; highlightStars(selectedRating);
+    checkSaveBtn(); setTab('add'); updateHint('✏️ Düzenleme modu — değişikliklerinizi yapıp kaydedin.');
   }
 
   function deletePlace(id, e) {
     e.stopPropagation();
+    const route = activeRoute(); if (!route) return;
     if (!confirm('Bu noktayı silmek istiyor musunuz?')) return;
-    places = places.filter(p => p.id !== id);
-    save();
-    renderMarkers();
-    renderList();
+    route.places = route.places.filter(p => p.id !== id);
+    saveDb(); renderMarkers(); renderList();
   }
 
   document.getElementById('sort-by').addEventListener('change', renderList);
@@ -843,118 +619,82 @@
      TABS
   ========================================================= */
   function setTab(name) {
-    document.querySelectorAll('.tab-btn').forEach(b =>
-      b.classList.toggle('active', b.dataset.tab === name));
-    document.querySelectorAll('.tab-panel').forEach(p =>
-      p.classList.toggle('active', p.id === 'tab-' + name));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
     if (name === 'list') renderList();
   }
-
-  document.querySelectorAll('.tab-btn').forEach(btn =>
-    btn.addEventListener('click', () => setTab(btn.dataset.tab)));
-
-  /* =========================================================
-     UTILS
-  ========================================================= */
-  function updateHint(msg) { document.getElementById('hint-box').textContent = msg; }
-
-  function escHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
 
   /* =========================================================
      EXPORT
   ========================================================= */
+  function sortedPlaces(places) {
+    return [...places].sort((a,b)=>{if(a.order==null&&b.order==null)return 0;if(a.order==null)return 1;if(b.order==null)return -1;return a.order-b.order;});
+  }
 
-  // PDF / Print
-  document.getElementById('btn-print').addEventListener('click', () => {
-    const title = document.getElementById('export-title').value.trim() || 'Gezi Planım';
-    const date  = document.getElementById('export-date').value.trim();
-    const notes = document.getElementById('export-notes').value.trim();
-
-    const sorted = [...places].sort((a, b) => {
-      if (a.order == null && b.order == null) return 0;
-      if (a.order == null) return 1;
-      if (b.order == null) return -1;
-      return a.order - b.order;
-    });
-
+  function buildPrintHtml(routeName, places, date, notes) {
+    const sorted = sortedPlaces(places);
     let itemsHtml = sorted.map(p => {
-      const stars = '★'.repeat(p.rating) + '☆'.repeat(5 - p.rating);
-      return `
-        <div class="print-item">
-          <div class="print-num">${p.order != null ? p.order : '·'}</div>
-          <div class="print-info">
-            <div class="print-name">${escHtml(p.name)}</div>
-            <div class="print-cat" style="background:${CAT_COLORS[p.cat]}">${CAT_LABELS[p.cat]}</div>
-            <div class="print-stars">${stars}</div>
-            ${p.desc ? `<div class="print-desc">${escHtml(p.desc)}</div>` : ''}
-            <div class="print-coords">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</div>
-          </div>
-        </div>`;
+      const stars = '★'.repeat(p.rating)+'☆'.repeat(5-p.rating);
+      return `<div class="print-item"><div class="print-num">${p.order!=null?p.order:'·'}</div><div class="print-info"><div class="print-name">${escHtml(p.name)}</div><div class="print-cat" style="background:${CAT_COLORS[p.cat]}">${CAT_LABELS[p.cat]}</div><div class="print-stars">${stars}</div>${p.desc?`<div class="print-desc">${escHtml(p.desc)}</div>`:''}<div class="print-coords">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</div></div></div>`;
     }).join('');
+    if (!itemsHtml) itemsHtml = '<p style="color:#a0aec0">Henüz nokta eklenmedi.</p>';
+    return `<div class="print-header"><h1>${escHtml(routeName)}</h1><div class="print-meta">${date?escHtml(date)+' &nbsp;|&nbsp; ':''}${sorted.length} durak</div></div><div class="print-day"><div class="print-day-title">Gezi Rotası</div>${itemsHtml}</div>${notes?`<div class="print-notes-section"><h3>Genel Notlar</h3><p style="font-size:0.85rem;color:#555;line-height:1.5">${escHtml(notes)}</p></div>`:''}`;
+  }
 
-    if (sorted.length === 0) itemsHtml = '<p style="color:#a0aec0">Henüz nokta eklenmedi.</p>';
-
-    document.getElementById('print-area').innerHTML = `
-      <div class="print-header">
-        <h1>${escHtml(title)}</h1>
-        <div class="print-meta">${date ? escHtml(date) + ' &nbsp;|&nbsp; ' : ''}${sorted.length} durak</div>
-      </div>
-      <div class="print-day">
-        <div class="print-day-title">Gezi Rotası</div>
-        ${itemsHtml}
-      </div>
-      ${notes ? `<div class="print-notes-section"><h3>Genel Notlar</h3><p style="font-size:0.85rem;color:#555;line-height:1.5">${escHtml(notes)}</p></div>` : ''}`;
-
+  document.getElementById('btn-print').addEventListener('click', () => {
+    const route = activeRoute(); if (!route) { alert('Önce bir rota seçin.'); return; }
+    const date = document.getElementById('export-date').value.trim();
+    const notes = document.getElementById('export-notes').value.trim();
+    document.getElementById('print-area').innerHTML = buildPrintHtml(route.name, route.places, date, notes);
     window.print();
   });
 
-  // JSON Export
   document.getElementById('btn-json-export').addEventListener('click', () => {
-    const title = document.getElementById('export-title').value.trim() || 'Gezi Planım';
-    const data  = { title, date: document.getElementById('export-date').value.trim(), notes: document.getElementById('export-notes').value.trim(), places, exportedAt: new Date().toISOString() };
-    const blob  = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url   = URL.createObjectURL(blob);
-    const a     = document.createElement('a');
-    a.href      = url;
-    a.download  = title.replace(/[^\w\sığüşöçİĞÜŞÖÇ]/gi, '') + '.json';
-    a.click();
-    URL.revokeObjectURL(url);
+    const route = activeRoute(); if (!route) { alert('Önce bir rota seçin.'); return; }
+    const data = { type: 'single_route', route, exportedAt: new Date().toISOString() };
+    downloadJson(data, route.name + '.json');
   });
 
-  // JSON Import
+  document.getElementById('btn-json-export-all').addEventListener('click', () => {
+    const data = { type: 'all_routes', routes: db.routes, exportedAt: new Date().toISOString() };
+    downloadJson(data, 'tum_rotalar.json');
+  });
+
+  function downloadJson(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = filename.replace(/[^\w\sığüşöçİĞÜŞÖÇ.-]/gi, '');
+    a.click(); URL.revokeObjectURL(url);
+  }
+
   document.getElementById('json-import-file').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
         const data = JSON.parse(ev.target.result);
-        if (!Array.isArray(data.places)) throw new Error();
-        if (!confirm(`"${data.title || 'Yedek'}" dosyasındaki ${data.places.length} nokta yüklensin mi? Mevcut veriler silinecek.`)) return;
-        places = data.places;
-        save();
-        renderMarkers();
-        renderList();
-        if (data.title) document.getElementById('export-title').value = data.title;
-        if (data.date)  document.getElementById('export-date').value  = data.date;
-        if (data.notes) document.getElementById('export-notes').value = data.notes;
-        alert('Yedek başarıyla yüklendi!');
+        if (data.type === 'all_routes' && data.routes) {
+          if (!confirm(`Tüm rotalar yüklensin mi? Mevcut veriler SİLİNECEK.`)) return;
+          db.routes = data.routes;
+          db.activeRouteId = Object.keys(data.routes)[0] || null;
+          saveDb(); renderRouteBar(); renderSidebarRoute(); renderMarkers(); renderList();
+          alert('Tüm rotalar yüklendi!');
+        } else if (data.type === 'single_route' && data.route) {
+          if (!confirm(`"${data.route.name}" rotası eklenerek yüklensin mi?`)) return;
+          const newId = genId();
+          db.routes[newId] = { ...data.route, id: newId };
+          db.activeRouteId = newId;
+          saveDb(); renderRouteBar(); renderSidebarRoute(); renderMarkers(); renderList();
+          alert(`"${data.route.name}" rotası eklendi!`);
+        } else { alert('Geçersiz dosya formatı.'); }
       } catch { alert('Geçersiz JSON dosyası.'); }
     };
-    reader.readAsText(file);
-    e.target.value = '';
+    reader.readAsText(file); e.target.value = '';
   });
-
 </script>
 
-<script
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA-ya47UZkpfWbcmpU8SvQCmUqew8JKkuo&callback=initMap&language=tr&region=TR"
-  async defer>
-</script>
-
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA-ya47UZkpfWbcmpU8SvQCmUqew8JKkuo&callback=initMap&language=tr&region=TR" async defer></script>
 </body>
 </html>
