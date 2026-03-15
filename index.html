@@ -341,10 +341,52 @@
     }
     .gm-popup-link:hover { background: #3367d6; }
 
+    .btn-export {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      background: linear-gradient(135deg, #2d3748, #4a5568);
+      color: white;
+    }
+    .btn-export-json { background: linear-gradient(135deg, #276749, #38a169); }
+    .btn-export-import { background: linear-gradient(135deg, #2b4c8c, #3b82f6); display:block; }
+    .btn-export:hover { opacity: 0.85; }
+
     /* scrollbar */
     .tab-content::-webkit-scrollbar { width: 5px; }
     .tab-content::-webkit-scrollbar-track { background: #f0f4f8; }
     .tab-content::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+
+    /* PRINT STYLES */
+    @media print {
+      body > *:not(#print-area) { display: none !important; }
+      #print-area {
+        display: block !important;
+        font-family: 'Segoe UI', sans-serif;
+        color: #1a202c;
+        padding: 20px;
+      }
+      .print-header { text-align: center; margin-bottom: 24px; border-bottom: 3px solid #c0392b; padding-bottom: 12px; }
+      .print-header h1 { font-size: 1.8rem; color: #c0392b; margin-bottom: 4px; }
+      .print-header .print-meta { font-size: 0.9rem; color: #718096; }
+      .print-day { margin-bottom: 20px; }
+      .print-day-title { font-size: 1.1rem; font-weight: 700; color: #c0392b; border-left: 4px solid #c0392b; padding-left: 10px; margin-bottom: 10px; }
+      .print-item { display: flex; gap: 12px; margin-bottom: 10px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; page-break-inside: avoid; }
+      .print-num { width: 28px; height: 28px; border-radius: 50%; background: #c0392b; color: white; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .print-info { flex: 1; }
+      .print-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 3px; }
+      .print-cat { font-size: 0.72rem; padding: 1px 7px; border-radius: 20px; color: white; display: inline-block; margin-bottom: 4px; }
+      .print-stars { font-size: 0.85rem; color: #f6ad55; margin-bottom: 3px; }
+      .print-desc { font-size: 0.8rem; color: #555; line-height: 1.4; }
+      .print-coords { font-size: 0.7rem; color: #a0aec0; margin-top: 3px; }
+      .print-notes-section { margin-top: 20px; padding: 12px; background: #f7fafc; border-radius: 8px; }
+      .print-notes-section h3 { font-size: 0.9rem; margin-bottom: 6px; color: #4a5568; }
+    }
   </style>
 </head>
 <body>
@@ -361,6 +403,7 @@
     <div class="sidebar-tabs">
       <button class="tab-btn active" data-tab="add">+ Nokta Ekle</button>
       <button class="tab-btn" data-tab="list">Listele</button>
+      <button class="tab-btn" data-tab="export">Dışa Aktar</button>
     </div>
 
     <div class="tab-content">
@@ -436,9 +479,42 @@
         </div>
         <div id="place-list"></div>
       </div>
+
+      <!-- EXPORT TAB -->
+      <div class="tab-panel" id="tab-export">
+        <div class="form-group">
+          <label>Gezi Adı</label>
+          <input type="text" id="export-title" placeholder="örn. Ege Turu 2025" />
+        </div>
+        <div class="form-group">
+          <label>Tarih <span style="font-weight:400;text-transform:none;font-size:0.75rem">(isteğe bağlı)</span></label>
+          <input type="text" id="export-date" placeholder="örn. 10-13 Haziran 2025" />
+        </div>
+        <div class="form-group">
+          <label>Notlar <span style="font-weight:400;text-transform:none;font-size:0.75rem">(isteğe bağlı)</span></label>
+          <textarea id="export-notes" placeholder="Genel gezi notları..."></textarea>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+          <button class="btn-export" id="btn-print">🖨️ PDF olarak Kaydet / Yazdır</button>
+          <button class="btn-export btn-export-json" id="btn-json-export">💾 JSON Yedek İndir</button>
+          <label class="btn-export btn-export-import" style="cursor:pointer;text-align:center">
+            📂 JSON Yedek Yükle
+            <input type="file" id="json-import-file" accept=".json" style="display:none" />
+          </label>
+        </div>
+
+        <div class="hint-box" style="margin-top:12px;font-size:0.78rem">
+          💡 <b>PDF:</b> Tarayıcının yazdır ekranı açılır, "PDF olarak kaydet" seç.<br><br>
+          💡 <b>JSON:</b> Tüm noktalarını yedekler. Bilgisayar değiştirsen bile geri yükleyebilirsin.
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- PRINT TEMPLATE -->
+<div id="print-area" style="display:none"></div>
 
 <script>
   /* =========================================================
@@ -787,6 +863,92 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
+
+  /* =========================================================
+     EXPORT
+  ========================================================= */
+
+  // PDF / Print
+  document.getElementById('btn-print').addEventListener('click', () => {
+    const title = document.getElementById('export-title').value.trim() || 'Gezi Planım';
+    const date  = document.getElementById('export-date').value.trim();
+    const notes = document.getElementById('export-notes').value.trim();
+
+    const sorted = [...places].sort((a, b) => {
+      if (a.order == null && b.order == null) return 0;
+      if (a.order == null) return 1;
+      if (b.order == null) return -1;
+      return a.order - b.order;
+    });
+
+    let itemsHtml = sorted.map(p => {
+      const stars = '★'.repeat(p.rating) + '☆'.repeat(5 - p.rating);
+      return `
+        <div class="print-item">
+          <div class="print-num">${p.order != null ? p.order : '·'}</div>
+          <div class="print-info">
+            <div class="print-name">${escHtml(p.name)}</div>
+            <div class="print-cat" style="background:${CAT_COLORS[p.cat]}">${CAT_LABELS[p.cat]}</div>
+            <div class="print-stars">${stars}</div>
+            ${p.desc ? `<div class="print-desc">${escHtml(p.desc)}</div>` : ''}
+            <div class="print-coords">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    if (sorted.length === 0) itemsHtml = '<p style="color:#a0aec0">Henüz nokta eklenmedi.</p>';
+
+    document.getElementById('print-area').innerHTML = `
+      <div class="print-header">
+        <h1>${escHtml(title)}</h1>
+        <div class="print-meta">${date ? escHtml(date) + ' &nbsp;|&nbsp; ' : ''}${sorted.length} durak</div>
+      </div>
+      <div class="print-day">
+        <div class="print-day-title">Gezi Rotası</div>
+        ${itemsHtml}
+      </div>
+      ${notes ? `<div class="print-notes-section"><h3>Genel Notlar</h3><p style="font-size:0.85rem;color:#555;line-height:1.5">${escHtml(notes)}</p></div>` : ''}`;
+
+    window.print();
+  });
+
+  // JSON Export
+  document.getElementById('btn-json-export').addEventListener('click', () => {
+    const title = document.getElementById('export-title').value.trim() || 'Gezi Planım';
+    const data  = { title, date: document.getElementById('export-date').value.trim(), notes: document.getElementById('export-notes').value.trim(), places, exportedAt: new Date().toISOString() };
+    const blob  = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url   = URL.createObjectURL(blob);
+    const a     = document.createElement('a');
+    a.href      = url;
+    a.download  = title.replace(/[^\w\sığüşöçİĞÜŞÖÇ]/gi, '') + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // JSON Import
+  document.getElementById('json-import-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!Array.isArray(data.places)) throw new Error();
+        if (!confirm(`"${data.title || 'Yedek'}" dosyasındaki ${data.places.length} nokta yüklensin mi? Mevcut veriler silinecek.`)) return;
+        places = data.places;
+        save();
+        renderMarkers();
+        renderList();
+        if (data.title) document.getElementById('export-title').value = data.title;
+        if (data.date)  document.getElementById('export-date').value  = data.date;
+        if (data.notes) document.getElementById('export-notes').value = data.notes;
+        alert('Yedek başarıyla yüklendi!');
+      } catch { alert('Geçersiz JSON dosyası.'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
 </script>
 
 <script
